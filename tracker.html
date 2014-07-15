@@ -1,0 +1,91 @@
+
+
+<html>
+    <head>
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+        <style>
+            body {
+                margin: 20px;
+            }
+        </style>
+
+        <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+        <script>
+
+            var refresh = function(required_change){
+                $.getJSON("http://zuul.openstack.org/status.json", function(data) {
+
+                    var result = []
+                    for (var i = 0; i < data["pipelines"].length; i++){
+                        if (data["pipelines"][i]["name"] == "gate"){
+                            result = data["pipelines"][i];
+                            break;
+                        }
+                    }
+
+                    for (var i = 0; i < result["change_queues"].length; i++){
+                        if (result["change_queues"][i]["name"] == "integrated"){
+                            result = result["change_queues"][i]
+                            break;
+                        }
+                    }
+
+                    var counter = 0;
+                    var required_pos = -1;
+
+
+                    for (var i = 0; i < result["heads"].length && required_pos < 0; i++){
+
+                        var head = result["heads"][i];
+
+
+                        for (var k = 0; k < head.length; k++){
+
+                            var id = head[k]["url"].match(/.+\/(\d+)/i)[1];
+                            console.log(id);
+                            if(id != required_change){
+                                counter++;
+                            }
+                            else{
+                                required_pos = counter;
+                                break;
+                            }
+                        }
+                    }
+
+                    $("#result").text(required_pos)
+                });
+            };
+
+            var do_refresh = function(){
+                var change_id = $("#in").val();
+
+                if (change_id)
+                    refresh(change_id);
+            }
+
+            $(function(){
+                 do_refresh();
+
+                setInterval(do_refresh, 5000);
+            });
+
+        </script>
+    </heat>
+
+    <body>
+        <h1> Queue position tracker </h1>
+        <p>
+            task id: <input id="in" type="text"> </input>
+        </p>
+        <p>
+            your task is at <code id="result"> </code> position
+        </p>
+    </body>
+</html>

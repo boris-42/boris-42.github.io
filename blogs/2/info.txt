@@ -1,0 +1,119 @@
+boris@ubuntu:~$ rally info 
+usage: rally info [-h]
+                  {BenchmarkScenarios,DeployEngines,DeploymentEngines,SLA,ServerProviders,find,list}
+                  ...
+
+This command allows you to get quick doc of some rally entities.
+
+    Available for scenario groups, scenarios, SLA, deploy engines and
+    server providers.
+
+    Usage:
+        $ rally info find <query>
+
+    To get information about main concepts of Rally as well as to list entities
+    you can query docs for, type one of the following:
+        $ rally info BenchmarkScenarios
+        $ rally info SLA
+        $ rally info DeploymentEngines
+        $ rally info ServerProviders
+
+Commands:
+   BenchmarkScenarios   Get information about benchmark scenarios available in Rally.
+   DeployEngines        Get information about deploy engines available in Rally.
+   DeploymentEngines    Get information about deploy engines available in Rally.
+   SLA                  Get information about SLA available in Rally.
+   ServerProviders      Get information about server providers available in Rally.
+   find                 Search for an entity that matches the query and print info about it.
+   list                 List main entities in Rally for which rally info find works.
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+
+boris@ubuntu:~$ rally info BenchmarkScenarios 
+-----------------------------
+ Rally - Benchmark scenarios 
+-----------------------------
+
+Benchmark scenarios are what Rally actually uses to test the performance of an OpenStack deployment.
+Each Benchmark scenario implements a sequence of atomic operations (server calls) to simulate
+interesing user/operator/client activity in some typical use case, usually that of a specific OpenStack
+project. Iterative execution of this sequence produces some kind of load on the target cloud.
+Benchmark scenarios play the role of building blocks in benchmark task configuration files.
+
+Scenarios in Rally are put together in groups. Each scenario group is concentrated on some specific 
+OpenStack functionality. For example, the "NovaServers" scenario group contains scenarios that employ
+several basic operations available in Nova.
+
+ List of Benchmark scenario groups:
+--------------------------------------------------------------------------------------------
+ Name                       Description
+--------------------------------------------------------------------------------------------
+ Authenticate               Benchmark scenarios for the authentication mechanism.
+ CeilometerAlarms           Benchmark scenarios for Ceilometer Alarms API.
+ CeilometerMeters           Benchmark scenarios for Ceilometer Meters API.
+ CeilometerQueries          Benchmark scenarios for Ceilometer Queries API.
+ CeilometerResource         Benchmark scenarios for Ceilometer Resource API.
+ CeilometerStats            Benchmark scenarios for Ceilometer Stats API.
+ CinderVolumes              Benchmark scenarios for Cinder Volumes.
+ DesignateBasic             Basic benchmark scenarios for Designate.
+ Dummy                      Dummy benchmarks for testing Rally benchmark engine at scale.
+ GlanceImages               Benchmark scenarios for Glance images.
+ HeatStacks                 Benchmark scenarios for Heat stacks.
+ KeystoneBasic              Basic benchmark scenarios for Keystone.
+ NeutronNetworks            Benchmark scenarios for Neutron.
+ NovaSecGroup               Benchmark scenarios for Nova security groups.
+ NovaServers                Benchmark scenarios for Nova servers.
+ Quotas                     Benchmark scenarios for quotas.
+ Requests                   Benchmark scenarios for HTTP requests.
+ SaharaClusters             Benchmark scenarios for Sahara clusters.
+ SaharaJob                  Benchmark scenarios for Sahara jobs.
+ SaharaNodeGroupTemplates   Benchmark scenarios for Sahara node group templates.
+ TempestScenario            Benchmark scenarios that launch Tempest tests.
+ VMTasks                    Benchmark scenarios that are to be run inside VM instances.
+ ZaqarBasic                 Benchmark scenarios for Zaqar.
+--------------------------------------------------------------------------------------------
+
+To get information about benchmark scenarios inside each scenario group, run:
+  $ rally info find <ScenarioGroupName>
+
+
+boris@ubuntu:~$ rally info find VMTasks
+------------------------------------
+ VMTasks (benchmark scenario group) 
+------------------------------------
+
+Benchmark scenarios that are to be run inside VM instances.
+ Benchmark scenarios:
+------------------------------------------------------------------------------------------------------
+ Name                             Description
+------------------------------------------------------------------------------------------------------
+ VMTasks.boot_runcommand_delete   Boot a server, run a script that outputs JSON, delete the server.
+------------------------------------------------------------------------------------------------------
+
+
+boris@ubuntu:~$ rally info find VMTasks.boot_runcommand_delete
+-----------------------------------------------------
+ VMTasks.boot_runcommand_delete (benchmark scenario) 
+-----------------------------------------------------
+
+Boot a server, run a script that outputs JSON, delete the server.
+
+Example Script in doc/samples/tasks/support/instance_dd_test.sh
+
+Parameters:
+    - image: glance image name to use for the vm
+    - flavor: VM flavor name
+    - script: script to run on the server, must output JSON mapping metric names to values (see the sample script below)
+    - interpreter: The shell interpreter to use when running script
+    - username: User to SSH to instance as
+    - password: Password on SSH authentication
+    - volume_args: volume args when boot VM from volume
+    - fixed_network: Network where instance is part of
+    - floating_network: External network used to get floating ip from
+    - ip_version: Version of ip protocol to use for connection
+    - port: Port to use for SSH connection
+    - use_floatingip: Whether to associate a floating ip for connection
+    - force_delete: Whether to use force_delete for instances
+Returns: Dictionary containing two keys, data and errors. Data is JSON data output by the script. Errors is raw data from the script's standard error stream.
