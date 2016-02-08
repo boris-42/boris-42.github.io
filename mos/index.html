@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="OpenStack Landing page">
+    <meta name="author" content="Boris Pavlovic">
+    <link id="favicon" rel="icon" href="https://www.mirantis.com/favicon.ico">
+
+    <title>MOS</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-1.12.0.min.js"> </script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+    <!-- Custom styles for this template -->
+    <link href="mos_landing.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+
+
+    <script type="text/javascript">
+      var getUrlParameter = function getUrlParameter(sParam) {
+        var sPageURL = decodeURIComponent(window.location.search.substring(1));
+        var sURLVariables = sPageURL.split('&');
+        var sParameterName;
+        var i;
+
+        for (i = 0; i < sURLVariables.length; i++) {
+            sParameterName = sURLVariables[i].split('=');
+
+            if (sParameterName[0] === sParam) {
+                return sParameterName[1] === undefined ? true : sParameterName[1];
+            }
+        }
+      };
+
+      jQuery(function($) {
+          var company = getUrlParameter("company") || "m"
+
+          var data = {
+              "m": {
+                  "name": "Mirantis",
+                  "type": "Inc.",
+                  "favicon": "https://www.mirantis.com/favicon.ico",
+                  "logo": "https://www.citrix.com/blogs/wp-content/uploads/2015/05/Mirantis-logo.png"
+              },
+              "wf": {
+                  "name": "Wells Fargo",
+                  "type": "Inc.",
+                  "favicon": "https://www01.wellsfargomedia.com/assets/images/global/wf-logo.gif",
+                  "logo": "http://www.rescue.org/sites/default/files/global/users152370/19015160_BG1.gif"
+              },
+              "att": {
+                  "name": "AT&T",
+                  "type": "Inc.",
+                  "favicon": "http://www.foxcitiestv.com/files/images/atticon.png",
+                  "logo": "https://upload.wikimedia.org/wikipedia/en/thumb/1/11/AT%26T_logo_2016.png/200px-AT%26T_logo_2016.png",
+              }
+          }
+
+          var c = data[company]
+          $("#favicon").attr("href", c["favicon"]);
+          $(document).attr("title", c["name"] + " Internal Cloud");
+
+          $("h3.topic").html(
+            "<img src='" + c["logo"] + "' height=\"35px\"'/>" + " internal cloud"
+          )
+
+          $(".footer")
+            .html("<p>&copy; 2016 " + c["name"] + ", " + c["type"] + "</p>");
+
+
+          //$("document").title("HUI")
+      });
+    </script>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header clearfix">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" class="active">
+              <a href="#">About</a>
+            </li>
+            <li role="presentation">
+              <a href="#" role="button" data-toggle="modal" data-target=".help_modal">Need Help?</a>
+            </li>
+          </ul>
+        </nav>
+        <h3 class="text-muted topic"></h3>
+      </div>
+
+      <div class="jumbotron">
+        <h1>Cloud For You!</h1>
+        <p class="lead">Make your work faster and simpler with OpenStack</p>
+
+        <p><a class="btn btn-lg btn-success" href="#" role="button" data-toggle="modal" data-target=".login_modal">Get It!</a></p>
+      </div>
+
+      <div class="row main_tips">
+        <h3 class="tips"> First Steps</h3>
+
+        <div class="col-lg-6">
+          <h4>What is OpenStack?</h4>
+          <p>OpenStack is a cloud operating system that controls large pools of compute, storage, and networking resources throughout a datacenter, all managed through a dashboard that gives administrators control while empowering their users to provision resources through a web interface. <a href="http://www.openstack.org/software/">Find more details here</a></p>
+        </div>
+
+        <div class="col-lg-6">
+          <h4>How can I use this?</h4>
+          <p >Your workstation doesn't have enough resource?
+             <br/>
+             Trying to run Gerrit/Jenkins/... for you team?
+             <br/>
+             You have to share environment with colleague?
+             <br/>
+             Working on windows but need Linux?
+             <br/>
+             Tired waiting for approval of new hardware?
+             <br />
+             <a href="http://nobody.knows.this"> Seems like cloud is right place for you</a>
+            </p>
+        </div>
+
+      </div>
+
+
+      <div class="row extra_tips">
+        <h3 class="tips"> More Tips For You </h3>
+
+        <div class="col-lg-6">
+          <h4>Murano - run your apps in cloud!</h4>
+          <p> The Murano Project introduces an application catalog to OpenStack, enabling application developers and cloud administrators to publish various cloud-ready applications in a browsable categorized catalog. Cloud users -- including inexperienced ones -- can then use the catalog to compose reliable application environments with the push of a button.
+          <a href="https://wiki.openstack.org/wiki/Murano"> Amazing? Find even more!</a></p>
+
+          <h4>Heat - create envs from templates</h4>
+          <p>The Heat project introduces an orchestration service that allows you to spin up multiple instances, logical networks, and other cloud services in an automated fashion. <a href="http://docs.openstack.org/developer/heat/">Find more about heat here</a></p>
+        </div>
+
+        <div class="col-lg-6">
+          <h4>What is OpenStack and what is not</h4>
+          <p>OpenStack is large ecosystem and there are a lot of rumors about it.
+          This article makes a clear explanation about what can you do with OpenStack
+          and what cannot. <a href="https://www.youtube.com/watch?v=J4BpqwMuIc8"> Clear your mind...</a></p>
+
+          <h4>Rally - measure performance!</h4>
+          <p>Before running anything important in cloud, you should check that performance
+          of it's resource VMs/Disks/Networks is acceptable for you. Hopefully in OpenStack
+          there is special tool for that, it will help you to get the number that you need.
+          Just go through easy
+          <a href="https://rally.readthedocs.org/en/latest/tutorial.html">  step by step guide to get your numbers</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="load_more" align="center">
+        <button class="btn btn-default" type="submit"><span>. . . Load More Tips . . .</span></button>
+      </div>
+
+      <footer class="footer"> </footer>
+
+    </div> <!-- /container -->
+
+
+    <div class="modal fade login_modal" tabindex="-1" role="dialog" aria-labelledby="Login for">
+      <div class="modal-dialog modal-large">
+        <div class="modal-content">
+              <div class="container2">
+              <form class="form-signin">
+                <h2 class="form-signin-heading">Please sign in</h2>
+                <label for="inputEmail" class="sr-only">Corporate email</label>
+                <input type="email" id="inputEmail" class="form-control" placeholder="Corporate address" required autofocus>
+                <label for="inputPassword" class="sr-only">Password</label>
+                <input type="password" id="inputPassword" class="form-control" placeholder="Password" required>
+                <div class="checkbox">
+                  <label>
+                    <input type="checkbox" value="remember-me"> Remember me
+                  </label>
+                </div>
+                <button class="btn btn-lg btn-success btn-block" type="submit">Sign in</button>
+                <p class="sign_in_issues"><a href="#support">Having issues with access?</a></p>
+              </form>
+            </div> <!-- /container -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade help_modal" tabindex="-1" role="dialog" aria-labelledby="Help Modal">
+      <div class="modal-dialog modal-large">
+        <div class="modal-content">
+              <div class="help_modal_container">
+
+                <h2> Don't worry! We can help you! </h2>
+                <hr />
+
+                <p> Please use one of the next methods to rich us:</p>
+
+                <ul>
+                  <li> Email us: support@company.com </li>
+                  <li> Call us: +1.123.456.78.90 </li>
+                  <li> <a href="#"> Click here for on-line chat </a></li>
+                </ul>
+
+                <hr />
+            </div> <!-- /container -->
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
