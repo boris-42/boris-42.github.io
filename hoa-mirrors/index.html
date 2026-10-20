@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convex mirrors for the blind turn behind our garages</title>
+<meta name="description" content="Why the blind turn in our garage alleys needs a convex traffic mirror, where to put it, and what drivers would see.">
+<link rel="stylesheet" href="css/site.css">
+<link rel="icon" href="data:,">
+</head>
+<body>
+<header class="hero">
+  <h1>Convex mirrors for the blind turn behind our garages</h1>
+  <p class="lead">Where the alley from the street (A1) turns into the alley behind the next building (A2), the corner building hides each approach from the other. Cars meet there at the turn, and kids run out of the walk from the lawn just around the corner.</p>
+  <p class="lead">We propose a 24 in outdoor convex traffic mirror at the turn: on a post on the island by the hydrant (A), on the garage wall across the turn (B), or both. This page shows what a driver sees with each, and how to put them up.</p>
+  <nav class="toc"><a href="#map-sec">What a driver sees</a><a href="#install">How to install</a><a href="#renders">Views from the 3D model</a></nav>
+</header>
+<main>
+  <section id="map-sec">
+    <h2>What a driver sees</h2>
+    <p>Pick a mirror setup and who is looking. Drag the white eye marker or the red child or car marker. <b>Dark hatching is hidden</b>: nobody there can be seen from the eye, directly or in a mirror.</p>
+    <div class="mapwrap">
+      <div>
+        <div class="controls">
+          <div class="ctl"><span>Mirrors</span><div class="seg" id="ctl-setup"><button data-v="none" aria-pressed="false">None</button><button data-v="A" aria-pressed="false">A only (post)</button><button data-v="B" aria-pressed="false">B only (wall)</button><button data-v="both" aria-pressed="true">A + B</button></div></div>
+          <div class="ctl"><span>Who is looking</span><div class="seg" id="ctl-driver"><button data-v="a1" aria-pressed="true">Driving up A1</button><button data-v="a2" aria-pressed="false">Driving down A2</button><button data-v="gar" aria-pressed="false">Backing out by the turn</button><button data-v="kid" aria-pressed="false">Kid at the walk exit</button></div></div>
+          <div class="ctl"><span>Looking for</span><div class="seg" id="ctl-kind"><button data-v="kid" aria-pressed="true">A small child</button><button data-v="car" aria-pressed="false">A car</button></div></div>
+        </div>
+        <div class="legend" aria-label="Legend">
+          <span><i class="sw-direct"></i>Seen directly</span><span><i class="sw-a"></i>Only in mirror A</span><span><i class="sw-b"></i>Only in mirror B</span><span><i class="sw-ab"></i>In A and in B</span><span><i class="sw-hidden"></i>Hidden</span>
+        </div>
+        <div class="map" id="map"></div>
+      </div>
+      <div class="side">
+        <div class="status" id="status" aria-live="polite"></div>
+        <h3>How much of the approach each one sees</h3>
+        <p class="note">Share of the spots on the other approaches (children by the curbs and garages, and cars heading for the turn, every 10 ft out to 90 ft) that the person at the marked spot can see, directly or in a mirror. With both mirrors, each is aimed at one approach (see How to install).</p>
+        <table class="cov" id="cov"></table>
+        <p class="note" id="cov-sum"></p>
+        <h3>Keep in mind</h3>
+        <ul class="note">
+          <li>A child in the mirror is small: a moving speck about 1 in tall on the mirror face when you are 30 ft from it. The mirror tells you something is coming, not who.</li>
+          <li>The plan comes from building outlines and the 3D model, accurate to about 3 ft. Shrubs on the islands count as 3 ft tall; trees count by their trunks only.</li>
+          <li>This mirror's real field of view is about 80 degrees (22.5 in lens, 2 in dome). The listing says 180 and the maker's site 90.</li>
+          <li>The map is a plan: it treats the lens by its horizontal middle line and assumes the driver turns their head.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <h2>How to install</h2>
+    <p>The mirror: SecurityMan 24 in outdoor convex mirror (24 in frame, 22.5 in lens), with its adjustable bracket (a collar clamp for a post, or an L plate for a wall). Heights are to the center of the mirror. Compass bearings are true north (on an iPhone: Settings, Compass, Use True North).</p>
+    <div id="install-cards"></div>
+    <h3>Aim it on site</h3>
+    <ol class="steps">
+      <li>Mount the mirror loosely at the height given, facing roughly the bearing given.</li>
+      <li>One person sits in a car (or stands with their eyes at 3 ft 9 in, a sedan driver's eye) in the lane about 30 ft before the corner, where the map's driver marker is.</li>
+      <li>A helper stands where a child would be hidden: for a driver coming up A1, at the end of the walk and 20 to 40 ft down A2 by the island curb; for a driver coming down A2, by the garage doors 20 to 40 ft down A1.</li>
+      <li>The installer turns and tilts the mirror until the helper shows near the middle of the mirror, not at its edge.</li>
+      <li>Check from the other approach (and, with one mirror, from both). Adjust a little to share the difference.</li>
+      <li>Tighten the clamp, then check once more from both driver spots.</li>
+    </ol>
+  </section>
+
+  <section id="renders">
+    <h2>Views from the 3D model</h2>
+    <p>Each situation: what the person sees with no mirror, with A only, with B only, and with both, plus a close-up of each mirror from the same eye (like a phone zoom). Tap a picture for the full size. Cars and kids are held at the same moment in every view.</p>
+    <div id="render-list"></div>
+  </section>
+</main>
+<footer>
+  <p>Made from a 3D model of the turn (renders, not photos). Building outlines (c) OpenStreetMap contributors (ODbL). Mirror: SecurityMan 24 in outdoor convex mirror; field of view worked out from its lens size and dome depth.</p>
+</footer>
+<script src="js/data.js"></script>
+<script src="js/renders.js"></script>
+<script src="js/map.js"></script>
+<script src="js/page.js"></script>
+</body>
+</html>
