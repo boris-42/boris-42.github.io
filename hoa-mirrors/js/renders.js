@@ -3,67 +3,12 @@ window.HOA_RENDERS = {
 "complete": true,
 "situations": [
 {
-"n": "01",
-"slug": "sedan-up-A1-45ft",
-"opts": {
-"none": {
-"wide": {
-"src": "img/r/01_sedan-up-A1-45ft_no-mirror_wide.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_no-mirror_wide_full.jpg"
-},
-"zoom": {}
-},
-"A": {
-"wide": {
-"src": "img/r/01_sedan-up-A1-45ft_A-only_wide.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_A-only_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/01_sedan-up-A1-45ft_A-only_zoom-A.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_A-only_zoom-A_full.jpg",
-"distFt": 92.6
-}
-}
-},
-"B": {
-"wide": {
-"src": "img/r/01_sedan-up-A1-45ft_B-only_wide.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_B-only_wide_full.jpg"
-},
-"zoom": {
-"B": {
-"src": "img/r/01_sedan-up-A1-45ft_B-only_zoom-B.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_B-only_zoom-B_full.jpg",
-"distFt": 52
-}
-}
-},
-"both": {
-"wide": {
-"src": "img/r/01_sedan-up-A1-45ft_A-and-B_wide.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_A-and-B_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/01_sedan-up-A1-45ft_A-and-B_zoom-A.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_A-and-B_zoom-A_full.jpg",
-"distFt": 92.5
-},
-"B": {
-"src": "img/r/01_sedan-up-A1-45ft_A-and-B_zoom-B.jpg",
-"full": "img/r/01_sedan-up-A1-45ft_A-and-B_zoom-B_full.jpg",
-"distFt": 52
-}
-}
-}
-},
-"title": "Driving up A1, 45 ft before the corner",
-"text": "A sedan driver (eye 3.75 ft) coming up from the street. Hidden behind the corner building: the SUV coming down A2 and the girl running out of the walk."
-},
-{
 "n": "02",
 "slug": "sedan-up-A1-30ft",
+"order": 0,
+"label": "From the street, 30 ft",
+"caption": "Car from the street, 30 ft before the turn. Hidden: the SUV in the back alley and the girl at the walk.",
+"thumb": "img/r/02_sedan-up-A1-30ft_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -116,13 +61,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "Driving up A1, 30 ft before the corner",
-"text": "A sedan driver (eye 3.75 ft) coming up from the street. Hidden behind the corner building: the SUV coming down A2 and the girl running out of the walk."
+}
 },
 {
 "n": "03",
 "slug": "sedan-up-A1-15ft",
+"order": 1,
+"label": "From the street, 15 ft",
+"caption": "Car from the street, 15 ft before the turn. Hidden: the SUV in the back alley and the girl at the walk.",
+"thumb": "img/r/03_sedan-up-A1-15ft_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -175,13 +122,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "Driving up A1, 15 ft before the corner",
-"text": "A sedan driver (eye 3.75 ft) coming up from the street. Hidden behind the corner building: the SUV coming down A2 and the girl running out of the walk."
+}
 },
 {
 "n": "04",
 "slug": "suv-up-A1-30ft",
+"order": 2,
+"label": "SUV from the street",
+"caption": "An SUV driver (higher seat), 30 ft before the turn. Hidden: the SUV in the back alley and the girl.",
+"thumb": "img/r/04_suv-up-A1-30ft_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -234,72 +183,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "SUV driver up A1, 30 ft before the corner",
-"text": "The same spot from a higher seat (eye 5 ft). Hidden: the SUV coming down A2 and the girl from the walk."
-},
-{
-"n": "05",
-"slug": "car-down-A2-45ft",
-"opts": {
-"none": {
-"wide": {
-"src": "img/r/05_car-down-A2-45ft_no-mirror_wide.jpg",
-"full": "img/r/05_car-down-A2-45ft_no-mirror_wide_full.jpg"
-},
-"zoom": {}
-},
-"A": {
-"wide": {
-"src": "img/r/05_car-down-A2-45ft_A-only_wide.jpg",
-"full": "img/r/05_car-down-A2-45ft_A-only_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/05_car-down-A2-45ft_A-only_zoom-A.jpg",
-"full": "img/r/05_car-down-A2-45ft_A-only_zoom-A_full.jpg",
-"distFt": 48.7
 }
-}
-},
-"B": {
-"wide": {
-"src": "img/r/05_car-down-A2-45ft_B-only_wide.jpg",
-"full": "img/r/05_car-down-A2-45ft_B-only_wide_full.jpg"
-},
-"zoom": {
-"B": {
-"src": "img/r/05_car-down-A2-45ft_B-only_zoom-B.jpg",
-"full": "img/r/05_car-down-A2-45ft_B-only_zoom-B_full.jpg",
-"distFt": 74.6
-}
-}
-},
-"both": {
-"wide": {
-"src": "img/r/05_car-down-A2-45ft_A-and-B_wide.jpg",
-"full": "img/r/05_car-down-A2-45ft_A-and-B_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/05_car-down-A2-45ft_A-and-B_zoom-A.jpg",
-"full": "img/r/05_car-down-A2-45ft_A-and-B_zoom-A_full.jpg",
-"distFt": 48.7
-},
-"B": {
-"src": "img/r/05_car-down-A2-45ft_A-and-B_zoom-B.jpg",
-"full": "img/r/05_car-down-A2-45ft_A-and-B_zoom-B_full.jpg",
-"distFt": 74.6
-}
-}
-}
-},
-"title": "Driving down A2, 45 ft before the corner",
-"text": "Hidden behind the corner building: the red sedan coming up A1 and the boy walking along the garages there."
 },
 {
 "n": "06",
 "slug": "car-down-A2-30ft",
+"order": 3,
+"label": "From the back alley, 30 ft",
+"caption": "Car from the back alley, 30 ft before the turn. Hidden: the red car from the street and the boy by the garages.",
+"thumb": "img/r/06_car-down-A2-30ft_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -352,13 +244,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "Driving down A2, 30 ft before the corner",
-"text": "Hidden behind the corner building: the red sedan coming up A1 and the boy walking along the garages there."
+}
 },
 {
 "n": "07",
 "slug": "car-down-A2-15ft",
+"order": 4,
+"label": "From the back alley, 15 ft",
+"caption": "Car from the back alley, 15 ft before the turn. Hidden: the red car and the boy.",
+"thumb": "img/r/07_car-down-A2-15ft_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -411,49 +305,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "Driving down A2, 15 ft before the corner",
-"text": "Hidden behind the corner building: the red sedan coming up A1 and the boy walking along the garages there."
-},
-{
-"n": "08",
-"slug": "car-out-of-A3",
-"opts": {
-"none": {
-"wide": {
-"src": "img/r/08_car-out-of-A3_no-mirror_wide.jpg",
-"full": "img/r/08_car-out-of-A3_no-mirror_wide_full.jpg"
-},
-"zoom": {}
-},
-"A": {
-"wide": {
-"src": "img/r/08_car-out-of-A3_A-only_wide.jpg",
-"full": "img/r/08_car-out-of-A3_A-only_wide_full.jpg"
-},
-"zoom": {}
-},
-"B": {
-"wide": {
-"src": "img/r/08_car-out-of-A3_B-only_wide.jpg",
-"full": "img/r/08_car-out-of-A3_B-only_wide_full.jpg"
-},
-"zoom": {}
-},
-"both": {
-"wide": {
-"src": "img/r/08_car-out-of-A3_A-and-B_wide.jpg",
-"full": "img/r/08_car-out-of-A3_A-and-B_wide_full.jpg"
-},
-"zoom": {}
 }
-},
-"title": "Coming out of A3 toward the corner",
-"text": "From here the corner is in plain view; the mirrors face the other two alleys, so this driver sees their backs."
 },
 {
 "n": "09",
 "slug": "backing-out-B4-last-garage",
+"order": 5,
+"label": "Backing out",
+"caption": "Backing out of the last garage before the turn. Hidden: the SUV coming out of the back alley.",
+"thumb": "img/r/09_backing-out-B4-last-garage_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -506,13 +366,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "Backing out of the last garage before the corner",
-"text": "Looking over the shoulder toward the turn. Hidden: the SUV coming down A2, about to turn past this garage."
+}
 },
 {
 "n": "10",
 "slug": "kid-at-W4-exit",
+"order": 6,
+"label": "Kid from the walk",
+"caption": "A kid at the end of the walk. Hidden: the red car coming in from the street.",
+"thumb": "img/r/10_kid-at-W4-exit_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -565,72 +427,15 @@ window.HOA_RENDERS = {
 }
 }
 }
-},
-"title": "A kid at the end of the walk, about to step onto A2",
-"text": "Child eye height 3.5 ft. Hidden behind the corner building: the red sedan coming up A1."
-},
-{
-"n": "11",
-"slug": "parent-at-corner",
-"opts": {
-"none": {
-"wide": {
-"src": "img/r/11_parent-at-corner_no-mirror_wide.jpg",
-"full": "img/r/11_parent-at-corner_no-mirror_wide_full.jpg"
-},
-"zoom": {}
-},
-"A": {
-"wide": {
-"src": "img/r/11_parent-at-corner_A-only_wide.jpg",
-"full": "img/r/11_parent-at-corner_A-only_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/11_parent-at-corner_A-only_zoom-A.jpg",
-"full": "img/r/11_parent-at-corner_A-only_zoom-A_full.jpg",
-"distFt": 17.3
 }
-}
-},
-"B": {
-"wide": {
-"src": "img/r/11_parent-at-corner_B-only_wide.jpg",
-"full": "img/r/11_parent-at-corner_B-only_wide_full.jpg"
-},
-"zoom": {
-"B": {
-"src": "img/r/11_parent-at-corner_B-only_zoom-B.jpg",
-"full": "img/r/11_parent-at-corner_B-only_zoom-B_full.jpg",
-"distFt": 52.5
-}
-}
-},
-"both": {
-"wide": {
-"src": "img/r/11_parent-at-corner_A-and-B_wide.jpg",
-"full": "img/r/11_parent-at-corner_A-and-B_wide_full.jpg"
-},
-"zoom": {
-"A": {
-"src": "img/r/11_parent-at-corner_A-and-B_zoom-A.jpg",
-"full": "img/r/11_parent-at-corner_A-and-B_zoom-A_full.jpg",
-"distFt": 17.3
-},
-"B": {
-"src": "img/r/11_parent-at-corner_A-and-B_zoom-B.jpg",
-"full": "img/r/11_parent-at-corner_A-and-B_zoom-B_full.jpg",
-"distFt": 52.6
-}
-}
-}
-},
-"title": "A parent standing at the corner by the island",
-"text": "Partly hidden: the sedan coming up A1 and the boy by the garages."
 },
 {
 "n": "12",
 "slug": "overview-28ft-up",
+"order": 7,
+"label": "Overview",
+"caption": "The turn from 28 ft up: both alleys and both mirror spots.",
+"thumb": "img/r/12_overview-28ft-up_thumb.jpg",
 "opts": {
 "none": {
 "wide": {
@@ -660,45 +465,7 @@ window.HOA_RENDERS = {
 },
 "zoom": {}
 }
-},
-"title": "Overview of the corner from above",
-"text": "The whole turn: both approaches, the two mirror spots, the cars and the kids."
-},
-{
-"n": "13",
-"slug": "top-down-60ft-up",
-"opts": {
-"none": {
-"wide": {
-"src": "img/r/13_top-down-60ft-up_no-mirror_wide.jpg",
-"full": "img/r/13_top-down-60ft-up_no-mirror_wide_full.jpg"
-},
-"zoom": {}
-},
-"A": {
-"wide": {
-"src": "img/r/13_top-down-60ft-up_A-only_wide.jpg",
-"full": "img/r/13_top-down-60ft-up_A-only_wide_full.jpg"
-},
-"zoom": {}
-},
-"B": {
-"wide": {
-"src": "img/r/13_top-down-60ft-up_B-only_wide.jpg",
-"full": "img/r/13_top-down-60ft-up_B-only_wide_full.jpg"
-},
-"zoom": {}
-},
-"both": {
-"wide": {
-"src": "img/r/13_top-down-60ft-up_A-and-B_wide.jpg",
-"full": "img/r/13_top-down-60ft-up_A-and-B_wide_full.jpg"
-},
-"zoom": {}
 }
-},
-"title": "The corner from straight above",
-"text": "Both approaches, the two mirror spots, the cars and the kids, seen from about 60 ft up."
 }
 ]
 };
