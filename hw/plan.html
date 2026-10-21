@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zigzag tunnel, 2D plan</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg: #f4f2ec; --fg: #1d1d1b; --mut: #6b6a64; --card: #ffffffee; --line: #d8d5cc; --acc: #d4561c; --bad: #c62828; --ok: #2e7d32; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161614; --fg: #ecebe6; --mut: #a3a29b; --card: #23231fee; --line: #3a3934; --acc: #f07a3e; --bad: #ff6b6b; --ok: #7bd389; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 14px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #cv { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .panel { position: fixed; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; backdrop-filter: blur(6px); }
+  #bar { top: 10px; left: 10px; max-width: 420px; }
+  #info { top: 10px; right: 10px; width: 320px; font-size: 15px; max-height: calc(100% - 20px); overflow: auto; }
+  #pop { display: none; width: 300px; z-index: 3; box-shadow: 0 4px 18px #0004; }
+  #pop.on { display: block; }
+  .row { display: flex; align-items: center; gap: 5px; margin: 4px 0; flex-wrap: wrap; }
+  .grow { flex: 1; }
+  button { font: inherit; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 3px 8px; min-height: 30px; cursor: pointer; }
+  button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .seg { display: inline-flex; } .seg button { border-radius: 0; } .seg button:first-child { border-radius: 6px 0 0 6px; } .seg button:last-child { border-radius: 0 6px 6px 0; }
+  .chk { display: inline-flex; align-items: center; gap: 3px; color: var(--mut); }
+  .num { min-width: 52px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ph { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  .ph button { min-height: 0; padding: 0 8px; border: 0; font-size: 18px; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  td, th { padding: 2px 4px; text-align: right; border-bottom: 1px solid var(--line); }
+  td:first-child, th:first-child { text-align: left; }
+  .bad { color: var(--bad); } .ok { color: var(--ok); } .mut { color: var(--mut); font-size: 13px; }
+  #state { width: 100%; font: 11px/1.3 ui-monospace, Menlo, monospace; resize: vertical; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: var(--fg); padding: 4px; }
+  #state.bad { border-color: var(--bad); }
+  summary { cursor: pointer; color: var(--mut); font-size: 12px; }
+  body.nonum #info { display: none; }
+  #card { display: none; position: fixed; inset: 0; z-index: 5; overflow: auto; background: var(--bg); padding: 14px 16px 40px; }
+  #card.on { display: block; }
+  #card h2 { font-size: 18px; margin: 4px 0 6px; } #card h3 { font-size: 15px; margin: 14px 0 4px; }
+  #card table { max-width: 720px; margin-bottom: 4px; } #card p, #card li { max-width: 720px; }
+  #card .top { display: flex; gap: 6px; align-items: center; position: sticky; top: -14px; background: var(--bg); padding: 4px 0; }
+  .sw { display: inline-block; width: 18px; height: 6px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  @media print { #cv, #bar, #info, #pop, #card .top button { display: none !important; } #card { position: static; display: block; padding: 0; } :root { --bg: #fff; --fg: #000; } }
+  @media (max-width: 700px) {
+    #bar { right: 10px; max-width: none; }
+    #info { top: auto; bottom: 10px; left: 10px; right: 10px; width: auto; max-height: 35%; }
+    #pop { left: 10px !important; right: 10px; top: auto !important; bottom: 10px; width: auto; }
+  }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="bar" class="panel">
+  <div class="row"><b class="grow">Zigzag plan</b><button id="undo">Undo</button><button id="reset">Reset</button><button id="copy">Copy state</button><button id="fit">Fit</button></div>
+  <div class="row"><span class="mut">Bend</span><span class="seg"><button id="one">one turn</button><button id="all">all together</button></span>
+    <span class="mut">All</span><button data-a="105">105°</button><button data-a="120">120°</button></div>
+  <div class="row"><span class="chk"><input type="checkbox" id="sat" checked>aerial</span><span class="chk"><input type="checkbox" id="can" checked>canopies</span><span class="chk"><input type="checkbox" id="clo" checked>cloth</span><span class="chk"><input type="checkbox" id="stk" checked>stakes</span><button id="nums">numbers</button><button id="cardb">Build card</button></div>
+  <div class="mut">Drag a box to swing it (the boxes past it follow). Drag box 3 to move the tunnel, ↻ to turn it. Tap a box or a turn's label for exact numbers.</div>
+  <details><summary>state (paste one here to load it)</summary><textarea id="state" rows="4" spellcheck="false"></textarea></details>
+</div>
+<div id="info" class="panel"></div>
+<div id="pop" class="panel"></div>
+<div id="card"></div>
+<script src="site/plan2d_site.js"></script>
+<script src="site/modules/zigzag.js"></script>
+<script>
+(() => {
+  const S = window.PLAN_SITE, Z = window.ZigzagLayout;
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const MID = 3, BK = ['b1', 'b2', 'b3', 'b4'], GK = ['g1', 'g2', 'g3', 'g4'], HOOP_MIN = Z.W,   // the hoops span the tunnel's width
+    EXIT_LAND = 3, EXIT_LANE = 6, EXIT_LANE_W = 3, EXIT_TURN = 90,
+    ROLLS = 5, ROOF_PLAN = 5.3;   // frost-cloth rolls on hand (4 of 6 x 50 ft, 1 of 6 x 25 ft for the roof's end); how wide the roof strip looks from above
+  // the layout: base angle, a bend and a gap at each turn T1..T4, bearing, where the middle box's center is (site feet);
+  // lk: swinging a box bends all turns together; ex: the turn with the emergency exit (0: none), es: its half (0: the
+  // box before the turn, 1: the box after); ea 1: the way out of it is turned toward the regular exit (Out end), else
+  // ed degrees clockwise from straight out. Default: the user's placement of 2026-10-18, exit between boxes 2 and 3 on
+  // box 3's half, leading toward the regular exit. cd: the side with two layers of cloth (-1 left, the street side; 1 right;
+  // 0 none), see ZigzagLayout.cloth.
+  const DEF = { a: 120, b1: 5, b2: -5, b3: 40, b4: 10, g1: 1.417, g2: 1.417, g3: 1.417, g4: 2, br: -48.5, mx: 10.42, my: -3.64, lk: 0, ex: 2, es: 1, ea: 1, ed: 0, cd: -1 };
+  const st = Object.assign({}, DEF);
+  // state in the hash: #a-120,b1-0,...,g1-1.25,...,br-25,mx-0.95,my--2.53,lk-0
+  const hs = {};
+  (location.hash.slice(1).split(',')).forEach(t => { const m = /^([a-z0-9]+)-(-?[\d.]+)$/.exec(t); if (m) hs[m[1]] = +m[2]; });
+  Object.keys(hs).forEach(k => { if (k in st) st[k] = hs[k]; });
+  if (hs.g != null) GK.forEach(k => { if (hs[k] == null) st[k] = hs.g; });   // older hashes: one gap for all turns
+  if (hs.x != null && hs.mx == null) {   // the first hashes (In end x, y and one bend bt, bd): the same layout, held by its middle
+    if (hs.bt) st['b' + hs.bt] = hs.bd || 0;
+    const A = Z.build({ angle: st.a, gap: st.g1, bends: bendsOf() }), m = A.units[MID - 1];
+    [st.mx, st.my] = Z.toSite(m.center, [hs.x, hs.y], st.br); st.br += m.angle + (180 - st.a) / 2;
+  }
+  const view = { cx: 0, cy: 0, s: 9 };   // s: pixels per foot
+  const aerial = new Image(); aerial.src = 'site/satellite.jpg';
+  const AER = { px: 2200, ft: 0.195 };   // north up, origin at the image center
+  aerial.onload = () => draw();
+  let L, P, C, sel = null, chips = [];   // the layout (local feet), the same in site feet, the selection {type:'unit'|'turn', k}
+  function bendsOf() { return { 1: st.b1, 2: st.b2, 3: st.b3, 4: st.b4 }; }
+  function gapsOf() { return { 1: st.g1, 2: st.g2, 3: st.g3, 4: st.g4 }; }
+
+  // ---------- geometry helpers ----------
+  const segDist = (p, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy; let t = l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); };
+  const inPoly = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+  const edges = (poly, closed = true) => { const e = []; for (let i = 0; i < poly.length - (closed ? 0 : 1); i++) e.push([poly[i], poly[(i + 1) % poly.length]]); return e; };
+  const segSeg = (a, b, c, d) => Math.min(segDist(a, c, d), segDist(b, c, d), segDist(c, a, b), segDist(d, a, b));
+  const cross = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b); };
+  const avg = pts => [pts.reduce((s, p) => s + p[0], 0) / pts.length, pts.reduce((s, p) => s + p[1], 0) / pts.length];
+  // signed gap between the tunnel's footprint and a shape (negative: overlapping)
+  function gapTo(polys, shape, closed = true) {
+    let best = Infinity, hit = false;
+    for (const poly of polys) for (const [a, b] of edges(poly)) for (const [c, d] of edges(shape, closed)) { if (cross(a, b, c, d)) hit = true; best = Math.min(best, segSeg(a, b, c, d)); }
+    if (closed) for (const poly of polys) { if (poly.some(p => inPoly(p, shape)) || shape.some(p => inPoly(p, poly))) hit = true; }
+    return hit ? -best : best;
+  }
+
+  function compute() {
+    L = Z.build({ angle: st.a, gap: st.g1, gaps: gapsOf(), bends: bendsOf(), anchor: 'middle', hoopMin: HOOP_MIN });
+    const ts = p => Z.toSite(p, [st.mx, st.my], st.br);
+    P = {
+      units: L.units.map(u => ({ k: u.k, corners: u.corners.map(ts), center: ts(u.center), hoops: [0, 0.5, 1].map(f => { const c = [u.entry[0] + u.dir[0] * L.W * f, u.entry[1] + u.dir[1] * L.W * f]; return [ts([c[0] - u.right[0] * L.W / 2, c[1] - u.right[1] * L.W / 2]), ts([c[0] + u.right[0] * L.W / 2, c[1] + u.right[1] * L.W / 2])]; }) })),
+      turns: L.turns.map(t => ({ k: t.k, side: t.side, angle: 180 - Math.abs(t.turnDeg), floor: t.floor.map(ts), inner: t.inner.map(ts), outer: t.outer.map(ts), wall: t.wallPts.map(ts), hoop: t.hoop.map(ts) })),
+      walk: L.walk.map(ts), inEnd: ts(L.inEnd), outEnd: ts(L.outEnd),
+      pivot: [st.mx, st.my], handle: ts([0, 8])   // the turning handle, 8 ft to the right of the middle box
+    };
+    P.turns.forEach(t => { t.center = avg(t.hoop); });
+    P.foot = P.units.map(u => u.corners).concat(P.turns.map(t => t.floor));
+    // the cloth: the roof strip and the side strips' pieces, in site feet
+    C = Z.cloth(L, { double: st.cd, exit: st.ex ? { turn: st.ex, half: st.es } : null });
+    const strips = { roof: C.roof, '-1': C.sides[-1], '1': C.sides[1] };
+    const sub = (S, a, b) => {   // the part of a strip between two distances along it
+      const out = [], at = S.marks.map(m => m.at), lerp = (i, d) => { const f = (d - at[i]) / ((at[i + 1] - at[i]) || 1); return [S.pts[i][0] + (S.pts[i + 1][0] - S.pts[i][0]) * f, S.pts[i][1] + (S.pts[i + 1][1] - S.pts[i][1]) * f]; };
+      for (let i = 0; i < S.pts.length - 1; i++) {
+        if (at[i + 1] < a || at[i] > b) continue;
+        if (!out.length) out.push(lerp(i, Math.max(a, at[i])));
+        out.push(lerp(i, Math.min(b, at[i + 1])));
+      }
+      return out.map(ts);
+    };
+    P.stakes = stakes();
+    P.cloth = { roof: C.roof.pts.map(ts), pieces: C.pieces.map(p => Object.assign({}, p, { site: sub(strips[p.strip], p.from, p.to) })), caps: C.caps.map(c => c.pts.map(ts)) };
+    // the emergency exit: an opening in the outer wall of turn st.ex, on one half of it (the fiberglass hoop's foot
+    // stands in the middle). Outside it must stay clear: a landing straight out (EXIT_LAND ft), then a lane EXIT_LANE_W
+    // wide and EXIT_LANE long that leads toward the regular exit (or wherever it is turned by hand)
+    P.exit = null;
+    if (st.ex) {
+      // the halves of the outer wall beside the hoop's foot (the wall bends out to the foot where the hoop keeps the width)
+      const t = P.turns[st.ex - 1], [Po, Qo] = t.outer, m = t.wall.length === 3 ? t.wall[1] : avg([Po, Qo]), [a0, b0] = st.es ? [m, Qo] : [Po, m];
+      const L = Math.hypot(b0[0] - a0[0], b0[1] - a0[1]), u = [(b0[0] - a0[0]) / L, (b0[1] - a0[1]) / L], fc = avg(t.floor);
+      const a = [a0[0] + u[0] * 0.25, a0[1] + u[1] * 0.25], b = [b0[0] - u[0] * 0.25, b0[1] - u[1] * 0.25];   // the frame leg and the hoop foot take 3 in each
+      let n = [-u[1], u[0]]; if ((m[0] - fc[0]) * n[0] + (m[1] - fc[1]) * n[1] < 0) n = [-n[0], -n[1]];
+      const om = avg([a, b]), add = (p, q, k) => [p[0] + q[0] * k, p[1] + q[1] * k];
+      const land = [a, b, add(b, n, EXIT_LAND), add(a, n, EXIT_LAND)], lc = add(om, n, EXIT_LAND / 2);
+      // the lane: from the landing's middle, turned from straight out by up to 90 degrees, toward the regular exit or by hand
+      const v = [P.outEnd[0] - lc[0], P.outEnd[1] - lc[1]];
+      const ang = Math.max(-EXIT_TURN, Math.min(EXIT_TURN, st.ea ? -Math.atan2(n[0] * v[1] - n[1] * v[0], n[0] * v[0] + n[1] * v[1]) * 180 / Math.PI : st.ed));
+      const c = Math.cos(ang * Math.PI / 180), sn = Math.sin(ang * Math.PI / 180), d = [n[0] * c + n[1] * sn, -n[0] * sn + n[1] * c], dr = [d[1], -d[0]];
+      const lane = [add(lc, dr, -EXIT_LANE_W / 2), add(lc, dr, EXIT_LANE_W / 2), add(add(lc, dr, EXIT_LANE_W / 2), d, EXIT_LANE), add(add(lc, dr, -EXIT_LANE_W / 2), d, EXIT_LANE)];
+      // what stands in that area: tree trunks, beds, shrubs, buildings, and the tunnel's own other parts
+      const blocked = [];
+      S.trees.forEach(([kind, x, y, cd, h, cc, o]) => { const r = (o && o.dbh || 1) / 2; if ([land, lane].some(z => inPoly([x, y], z) || edges(z).some(([p, q]) => segDist([x, y], p, q) < r))) blocked.push(kind + ' trunk'); });
+      S.beds.forEach(bd => { if (gapTo([land, lane], bd.poly) < 0) blocked.push(bd.id === 'B1' ? 'bed west (needles)' : 'bed east (hedge)'); });
+      S.shrubs.forEach(([x, y, w, d]) => { if (gapTo([land, lane], [[x - w / 2, y - d / 2], [x + w / 2, y - d / 2], [x + w / 2, y + d / 2], [x - w / 2, y + d / 2]]) < 0) blocked.push('hedge'); });
+      S.buildings.forEach(([fp]) => { if (gapTo([land, lane], fp) < 0) blocked.push('building'); });
+      P.foot.forEach((pl, i) => { if (pl !== t.floor && gapTo([land, lane], pl) < 0) blocked.push(i < 5 ? 'box ' + (i + 1) : 'turn T' + (i - 4)); });
+      P.exit = { k: st.ex, a, b, land, lane, n, mid: lc, ang, width: L - 0.5, tip: add(lc, d, EXIT_LANE), d, handle: add(lc, d, EXIT_LANE + 1.5), blocked: [...new Set(blocked)] };
+    }
+  }
+
+  // ---------- edits ----------
+  // each turn's angle between its two boxes stays within 75..180 (the turn keeps its side)
+  const clampB = (k, b) => k % 2 ? Math.max(st.a - 180, Math.min(st.a - 75, b)) : Math.max(75 - st.a, Math.min(180 - st.a, b));
+  const r1 = v => Math.round(v * 2) / 2;
+  // swing box k (and the boxes past it, away from the middle) by d degrees clockwise; box 3 turns the whole tunnel
+  function swing(k, d) {
+    if (k === MID) { st.br = ((r1(st.br + d) + 540) % 360) - 180; return; }
+    if (st.lk) { const D = d / (k - MID); BK.forEach((key, i) => { st[key] = r1(clampB(i + 1, st[key] + D)); }); }
+    else { const t = k > MID ? k - 1 : k; st['b' + t] = r1(clampB(t, st['b' + t] + (k > MID ? d : -d))); }
+  }
+  // the angle between the two boxes at turn k, +1 opens it
+  function openTurn(k, d) { st['b' + k] = r1(clampB(k, st['b' + k] + (k % 2 ? -d : d))); }
+  const hist = [];
+  function snap() { const s = JSON.stringify(st); if (hist[hist.length - 1] !== s) hist.push(s); if (hist.length > 300) hist.shift(); }
+  function undo() { if (!hist.length) return; Object.assign(st, JSON.parse(hist.pop())); update(); }
+
+  // ---------- drawing ----------
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  let W = 0, H = 0, DPR = 1;
+  function resize() { DPR = window.devicePixelRatio || 1; W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; draw(); }
+  const sx = X => (X - view.cx) * view.s + W / 2, sy = Y => (view.cy - Y) * view.s + H / 2;
+  const fx = x => (x - W / 2) / view.s + view.cx, fy = y => view.cy - (y - H / 2) / view.s;
+  function path(pts, close = true) { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, sx(p[0]), sy(p[1]))); if (close) ctx.closePath(); }
+  function poly(pts, fill, stroke, lw = 1, dash) { path(pts); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]); } }
+  function line(pts, stroke, lw = 1, dash) { path(pts, false); ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]); }
+  function circle(p, r, fill, stroke, lw = 1, dash) { ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), r * view.s, 0, 7); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.setLineDash(dash || []); ctx.stroke(); ctx.setLineDash([]); } }
+  function label(p, t, col, size = 12, bg) { ctx.font = `600 ${size}px -apple-system, sans-serif`; const x = sx(p[0]), y = sy(p[1]), w = ctx.measureText(t).width; if (bg) { ctx.fillStyle = bg; ctx.fillRect(x - w / 2 - 4, y - size / 2 - 3, w + 8, size + 6); } ctx.fillStyle = col; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, x, y); return [x - w / 2 - 4, y - size / 2 - 3, x + w / 2 + 4, y + size / 2 + 3]; }
+  const TREE_COL = { redwood: '#2f5d3a', sweetgum: '#a0562b', oak: '#556b2f', birch: '#9aa66b', plum: '#6b2d4a', crape: '#b06a8a' };
+  function draw() {
+    if (!L) return;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = css('--bg'); ctx.fillRect(0, 0, W, H);
+    const sat = $('sat').checked && aerial.complete && aerial.naturalWidth;
+    if (sat) { const half = AER.px * AER.ft / 2; ctx.globalAlpha = 0.75; ctx.drawImage(aerial, sx(-half), sy(half), AER.px * AER.ft * view.s, AER.px * AER.ft * view.s); ctx.globalAlpha = 1; }
+    ctx.globalAlpha = sat ? 0.35 : 1;
+    S.buildings.forEach(([fp]) => poly(fp, '#c9c3b6', '#8f897c'));
+    S.walks.forEach(([pl, w]) => line(pl, '#d9d6cf', w * view.s));
+    S.curbs.forEach(pl => line(pl, '#7a776f', 1.5));
+    S.pockets.forEach(pp => poly(pp, '#bdb9b0', '#8f897c'));
+    poly(S.lawn, '#9cc77a', '#5e8f3f', 1.5);
+    S.paths.forEach(([pl, w]) => line(pl, '#e3e0d8', w * view.s));
+    ctx.globalAlpha = 1;
+    S.beds.forEach(b => { poly(b.poly, sat ? '#6b4a2a55' : '#8a6a46', null); if (b.edge) line(b.edge, '#5a3d22', 2.5); });
+    S.shrubs.forEach(([x, y, w, d]) => poly([[x - w / 2, y - d / 2], [x + w / 2, y - d / 2], [x + w / 2, y + d / 2], [x - w / 2, y + d / 2]], '#4f6f3a88', '#3a5a2a'));
+    // trees: canopy circles (dashed) and trunks
+    S.trees.forEach(([kind, x, y, cd, h, cc, o]) => {
+      const col = TREE_COL[kind] || '#555';
+      if ($('can').checked) circle(cc || [x, y], cd / 2, col + '22', col, 1, [4, 4]);
+      circle([x, y], Math.max(0.5, (o && o.dbh || 1) / 2), col, '#000', 1);
+    });
+    const rw = S.trees.filter(t => t[0] === 'redwood');
+    if (rw[0]) label([rw[0][1], rw[0][2] + 3], 'west redwood (left)', '#fff', 11, '#2f5d3acc');
+    if (rw[1]) label([rw[1][1], rw[1][2] + 3], 'east redwood (right)', '#fff', 11, '#2f5d3acc');
+    // the new layout: turn floors, boxes with their 3 hoops, outer walls, the gaps, fiberglass hoops, the walk line
+    const acc = css('--acc'), isSel = (type, k) => sel && sel.type === type && sel.k === k;
+    P.turns.forEach(t => poly(t.floor, '#9a9a96dd', isSel('turn', t.k) ? acc : '#555', isSel('turn', t.k) ? 4 : 1));
+    P.units.forEach(u => {
+      poly(u.corners, isSel('unit', u.k) ? '#4a3a30ee' : '#3a3a38dd', isSel('unit', u.k) ? acc : '#111', isSel('unit', u.k) ? 4 : 2);
+      u.hoops.forEach(h => line(h, '#000', 2.5));
+    });
+    P.turns.forEach(t => { line(t.wall, '#ffffff', 3); line(t.inner, '#e53935', 3); line(t.hoop, '#000', 6); line(t.hoop, '#43d15a', 4); });
+    if (P.exit) {   // the emergency exit: the opening in red, the area that must stay clear green (or red if something is in it)
+      const E = P.exit, bad = E.blocked.length;
+      const zc = bad ? '#ff5252' : '#69f0ae';
+      poly(E.lane, bad ? '#c6282840' : '#2e7d3240', zc, 2, [6, 4]); poly(E.land, bad ? '#c6282840' : '#2e7d3240', zc, 2, [6, 4]);
+      const ah = [E.tip, [E.tip[0] - E.d[0] * 1.2 + E.d[1] * 0.8, E.tip[1] - E.d[1] * 1.2 - E.d[0] * 0.8], [E.tip[0] - E.d[0] * 1.2 - E.d[1] * 0.8, E.tip[1] - E.d[1] * 1.2 + E.d[0] * 0.8]];
+      line([E.mid, E.tip], zc, 2.5); poly(ah, zc, null);
+      line([E.a, E.b], '#000', 9); line([E.a, E.b], '#ff1744', 6);
+      label(avg(E.land), 'EXIT', '#fff', 12, bad ? '#c62828' : '#2e7d32');
+      line([E.mid, E.handle], bad ? '#ff5252' : '#69f0ae', 1.5, [3, 3]);   // drag this to turn the way out
+      ctx.beginPath(); ctx.arc(sx(E.handle[0]), sy(E.handle[1]), 11, 0, 7); ctx.fillStyle = bad ? '#c62828' : '#2e7d32'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+      label(E.handle, '↻', '#fff', 14);
+    }
+    if ($('clo').checked) drawCloth();
+    line(P.walk, acc, 2, [2, 3]);
+    P.units.forEach(u => label(u.center, String(u.k), '#fff', 15));
+    if (sel && sel.type === 'unit' && sel.k !== MID) { const c = pivotOf(sel.k); ctx.beginPath(); ctx.arc(sx(c[0]), sy(c[1]), 5, 0, 7); ctx.fillStyle = acc; ctx.fill(); }   // where it swings
+    chips = P.turns.map(t => ({ k: t.k, r: label(t.center, `T${t.k} ${t.angle.toFixed(0)}°`, '#fff', 13, isSel('turn', t.k) ? acc : '#000b') }));
+    if ($('stk').checked) drawStakes();   // the stake-out numbers on top of everything but In, Out and the turning handles
+    label(P.inEnd, 'In', '#fff', 12, acc); label(P.outEnd, 'Out', '#fff', 12, acc);
+    // the middle and the turning handle
+    line([P.pivot, P.handle], acc, 1.5, [4, 3]);
+    ctx.beginPath(); ctx.arc(sx(P.pivot[0]), sy(P.pivot[1]), 4, 0, 7); ctx.fillStyle = acc; ctx.fill();
+    ctx.beginPath(); ctx.arc(sx(P.handle[0]), sy(P.handle[1]), 14, 0, 7); ctx.fillStyle = acc; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+    label(P.handle, '↻', '#fff', 17);
+    // scale bar
+    const ft = view.s > 12 ? 5 : view.s > 4 ? 10 : 50, px = ft * view.s;
+    ctx.fillStyle = css('--fg'); ctx.fillRect(W - px - 20, H - 24, px, 3); ctx.font = '12px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(ft + ' ft', W - 20, H - 32);
+    placePop();
+  }
+
+  // the cloth: each turn's cap (other cloth) under the roof strip, the roof strip as a translucent band, each side piece as a line just outside the wall (the second layer
+  // further out, the exit flap a little out so its lap shows), a badge with its roll number at its start
+  const SIDE_COL = { dbl: '#1e88e5', one: '#e0457b' };
+  function offsetLine(pts, s, dd) {   // the polyline moved dd ft outward (to the right of In to Out for s = 1)
+    const n = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [s * (b[1] - a[1]) / l, -s * (b[0] - a[0]) / l]; };
+    return pts.map((p, i) => {
+      const a = i ? n(pts[i - 1], p) : null, b = i < pts.length - 1 ? n(p, pts[i + 1]) : null, m = a && b ? [a[0] + b[0], a[1] + b[1]] : (a || b);
+      const l = Math.hypot(m[0], m[1]) || 1, c = a && b ? Math.max(0.35, (m[0] * a[0] + m[1] * a[1]) / l) : 1;
+      return [p[0] + m[0] / l * dd / c, p[1] + m[1] / l * dd / c];
+    });
+  }
+  function badge(p, t, col) { ctx.beginPath(); ctx.arc(sx(p[0]), sy(p[1]), 8, 0, 7); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke(); label(p, t, '#fff', 10); }
+  function drawCloth() {
+    P.cloth.caps.forEach(c => poly(c, '#ffb30066', '#ffb300', 2, [5, 3]));
+    ctx.lineJoin = 'round'; ctx.globalAlpha = 0.3; line(P.cloth.roof, '#9d8cff', ROOF_PLAN * view.s); ctx.globalAlpha = 1; ctx.lineJoin = 'miter';
+    const marks = [];
+    P.cloth.pieces.forEach(p => {
+      if (p.strip === 'roof') {   // solid along the middle, the end piece a little aside so its lap shows
+        const pts = p.name === 'roof end' ? offsetLine(p.site, 1, 0.3) : p.site;
+        line(pts, '#000a', 5); line(pts, '#7a5cff', 3);
+        [0, pts.length - 1].forEach(i => { const q = offsetLine(pts, 1, 0.45)[i], r = offsetLine(pts, 1, -0.45)[i]; line([r, q], '#7a5cff', 2); });
+        marks.push([offsetLine(pts, -1, 1.1)[0], p.roll, '#7a5cff']); return;
+      }
+      const s = +p.strip, col = s === st.cd ? SIDE_COL.dbl : SIDE_COL.one, dd = 0.45 * p.layer + (/flap/.test(p.name) ? 0.25 : 0);
+      const pts = offsetLine(p.site, s, dd);
+      line(pts, '#000a', 5); line(pts, col, 3);
+      [0, pts.length - 1].forEach(i => { const q = offsetLine(p.site, s, dd + 0.35)[i]; line([pts[i], q], col, 2); });
+      marks.push([offsetLine(p.site, s, dd + 1.1)[0], p.roll, col]);
+    });
+    marks.forEach(([q, n, col]) => badge(q, String(n), col));
+  }
+
+  // ---------- stake-out from the Out end: box 5 off the walkway, then each box from the one placed before it ----------
+  // Legs are the boxes' corner legs; left and right as walking In to Out (left: the street side, blue). Box 5's two Out
+  // legs are measured square off the nearest walkway edge (with how far the near one is from the walkway's bend), then
+  // each next box's two legs facing the turn from the placed box's two legs (left to left, right to right) plus one
+  // cross (the new box's inner leg to the placed box's outer leg: two lengths alone let the box swing), and the hoop's
+  // stake from the two outer legs.
+  function nearOn(p, pl) {
+    let best = null;
+    for (let i = 0; i < pl.length - 1; i++) {
+      const a = pl[i], b = pl[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+      const t = Math.max(0, Math.min(1, l2 ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2 : 0)), q = [a[0] + t * dx, a[1] + t * dy], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+      if (!best || d < best.d) best = { q, d, i, t, len: Math.sqrt(l2) };
+    }
+    return best;
+  }
+  function stakes() {
+    const U = P.units, n = U.length, last = U[n - 1], d2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+    const refs = S.paths.map(([pl, w], i) => ({ pl, w, name: PATHN[i] || `path ${i + 1}` })).concat(S.walks.map(([pl, w]) => ({ pl, w, name: 'sidewalk' })));
+    const legs = { L: last.corners[3], R: last.corners[2] };
+    let ref = null;
+    refs.forEach(r => { const d = Math.min(nearOn(legs.L, r.pl).d, nearOn(legs.R, r.pl).d) - r.w / 2; if (!ref || d < ref.d) ref = Object.assign({}, r, { d }); });
+    const edge = p => { const c = nearOn(p, ref.pl), u = [(p[0] - c.q[0]) / (c.d || 1), (p[1] - c.q[1]) / (c.d || 1)]; return { leg: p, at: [c.q[0] + u[0] * ref.w / 2, c.q[1] + u[1] * ref.w / 2], d: c.d - ref.w / 2, c }; };
+    const out = { L: edge(legs.L), R: edge(legs.R) }, near = out.L.d <= out.R.d ? 'L' : 'R';
+    // the near leg along the walkway to its nearest bend, and what meets the walkway there
+    const c = out[near].c, vi = c.t < 0.5 ? c.i : c.i + 1, along = (c.t < 0.5 ? c.t : 1 - c.t) * c.len, V = ref.pl[vi];
+    const base = r => r.name.split(' (')[0], cand = refs.filter(r => r.pl !== ref.pl && r.pl.some(q => d2(q, V) < 3));
+    const meets = cand.find(r => base(r) !== base(ref)) || cand[0];   // another path rather than the walkway's own next part
+    const steps = [];
+    for (let k = n - 1; k >= 1; k--) {
+      const a = U[k - 1], b = U[k], T = L.turns[k - 1], F = P.turns[k - 1].hoop[1], inR = T.side > 0;
+      const nL = a.corners[3], nR = a.corners[2], pL = b.corners[0], pR = b.corners[1];
+      steps.push({ box: a.k, from: b.k, turn: T.k, nL, nR, pL, pR, F, LL: d2(nL, pL), RR: d2(nR, pR), inner: inR ? 'right' : 'left', outer: inR ? 'left' : 'right',
+        cross: inR ? [nR, pL] : [nL, pR], crossD: inR ? d2(nR, pL) : d2(nL, pR), oa: inR ? nL : nR, ob: inR ? pL : pR, fa: d2(inR ? nL : nR, F), fb: d2(inR ? pL : pR, F) });
+    }
+    return { ref, out, near, along, bend: meets ? `where the ${meets.name} meets it` : 'its bend', steps, box: last.k };
+  }
+  const LEG_COL = { L: '#1e88e5', R: '#e0457b' };
+  // a measured length: the line and its label (moved off by off ft, away from the point away if given)
+  function dim(a, b, t, col, dash, off = 0, away) {
+    line([a, b], '#000a', 4, dash); line([a, b], col, 2, dash);
+    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], l = dist(a, b) || 1;
+    let nrm = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    if (away && (m[0] - away[0]) * nrm[0] + (m[1] - away[1]) * nrm[1] < 0) nrm = [-nrm[0], -nrm[1]];
+    label([m[0] + nrm[0] * off, m[1] + nrm[1] * off], t, '#fff', 14, col);
+  }
+  function drawStakes() {
+    const K = P.stakes;
+    K.steps.forEach(s => {
+      const c = P.turns[s.turn - 1].center;   // short lengths (the inner gap) get their label pushed away from the turn
+      dim(s.nL, s.pL, fmt(s.LL), LEG_COL.L, null, s.LL < 3 ? 1.8 : 1.1, c);
+      dim(s.nR, s.pR, fmt(s.RR), LEG_COL.R, null, s.RR < 3 ? 1.8 : 1.1, c);
+      dim(s.cross[0], s.cross[1], fmt(s.crossD), '#555555', [4, 3], 1.1, c);
+      dim(s.oa, s.F, fmt(s.fa), '#2e7d32', [2, 3]); dim(s.ob, s.F, fmt(s.fb), '#2e7d32', [2, 3]);
+    });
+    ['L', 'R'].forEach(k => {   // box 5's Out legs off the walkway edge, labels out on the walkway
+      const e = K.out[k], u = [(e.c.q[0] - e.leg[0]) / (e.c.d || 1), (e.c.q[1] - e.leg[1]) / (e.c.d || 1)];
+      line([e.leg, e.at], '#000a', 4); line([e.leg, e.at], LEG_COL[k], 2); circle(e.at, 0.18, '#000', null);
+      label([e.at[0] + u[0] * 1.6, e.at[1] + u[1] * 1.6], fmt(Math.max(0, e.d)), '#fff', 14, LEG_COL[k]);
+    });
+    P.units.forEach(u => u.corners.forEach((c, i) => circle(c, 0.28, i === 0 || i === 3 ? LEG_COL.L : LEG_COL.R, '#fff', 1.5)));
+  }
+  function stakeInfo() {
+    const K = P.stakes, nr = K.near === 'L' ? 'left' : 'right', fr = K.near === 'L' ? 'right' : 'left';
+    const rows = K.steps.map(s => `<tr><td>${s.box}</td><td>${fmt(s.LL)}</td><td>${fmt(s.RR)}</td><td>${fmt(s.crossD)}</td><td>${fmt(s.fa)} · ${fmt(s.fb)}</td></tr>`).join('');
+    return `<p style="margin:8px 0 2px"><b>Stake out from Out</b> <span class="mut">legs: <span style="color:${LEG_COL.L}">●</span> left (street side) <span style="color:${LEG_COL.R}">●</span> right</span></p>
+      <p class="mut" style="margin:2px 0">Box ${K.box}: ${nr} Out leg at the ${K.ref.name} edge (${fmt(Math.max(0, K.out[K.near].d))} off it), about ${fmt(K.along)} from ${K.bend}; ${fr} Out leg ${fmt(K.out[K.near === 'L' ? 'R' : 'L'].d)} from that edge, square off it.</p>
+      <table><tr><th>box</th><th>left legs</th><th>right legs</th><th>cross</th><th>hoop stake</th></tr>${rows}</table>
+      <p class="mut" style="margin:2px 0">Each next box: its two legs at the turn from the placed box's (left to left, right to right), the cross from its inner leg to the placed box's outer leg, the hoop stake from the two outer legs. Every box is square: 5'11" sides, 8'4" corner to corner.</p>`;
+  }
+
+  // ---------- numbers ----------
+  const PATHN = ['back walkway (west)', 'back walkway (east)', 'courtyard path', 'west courtyard path', 'SE walkway', 'SE walkway loop'];
+  const fmt = v => { const f = Math.abs(v), ft = Math.floor(f + 1e-6), inch = Math.round((f - ft) * 12); return (v < 0 ? '-' : '') + (inch === 12 ? (ft + 1) + "'0\"" : ft + "'" + inch + '"'); };
+  function info() {
+    const rows = L.turns.map(t => `<tr><td>T${t.k} ${t.side > 0 ? 'R' : 'L'}</td><td>${(180 - Math.abs(t.turnDeg)).toFixed(0)}°</td><td>${fmt(t.gap)}</td><td>${fmt(t.wall)}</td><td>${fmt(t.hoopSpan)}</td></tr>`).join('');
+    // clearances: tree trunks, beds, paths, lawn edge
+    const near = [];
+    S.trees.forEach(([kind, x, y, cd, h, cc, o]) => { const r = (o && o.dbh || 1) / 2; let d = Infinity; P.foot.forEach(pl => edges(pl).forEach(([a, b]) => { d = Math.min(d, segDist([x, y], a, b)); })); if (P.foot.some(pl => inPoly([x, y], pl))) d = -1; near.push([`${kind} trunk`, d - r]); });
+    S.beds.forEach(b => near.push([`bed ${b.id === 'B1' ? 'west (needles)' : 'east (hedge)'}`, gapTo(P.foot, b.poly)]));
+    S.paths.forEach(([pl, w], i) => near.push([PATHN[i] || `path ${i + 1}`, gapTo(P.foot, pl, false) - w / 2]));
+    S.walks.forEach(([pl, w]) => near.push(['sidewalk', gapTo(P.foot, pl, false) - w / 2]));
+    const out = P.foot.flat().filter(p => !inPoly(p, S.lawn)).length;
+    near.sort((a, b) => a[1] - b[1]);
+    const nrows = near.slice(0, 6).map(([n, d]) => `<tr><td>${n}</td><td class="${d < 1.5 ? 'bad' : d < 3 ? '' : 'ok'}">${d < 0 ? 'overlaps' : fmt(d)}</td></tr>`).join('');
+    $('info').innerHTML = `
+      <table><tr><td>Run, In to Out</td><td>${fmt(L.runLen)}</td></tr>
+      <tr><td>Walk line</td><td>${fmt(L.walkLen)}</td></tr></table>
+      ${stakeInfo()}
+      <p class="mut" style="margin:8px 0 2px">Turns (angle between the two boxes; gap between their inner corners; wall: outer side, out to the hoop foot; hoop: fiberglass span)</p>
+      <table><tr><th>turn</th><th>angle</th><th>gap</th><th>wall</th><th>hoop</th></tr>${rows}</table>
+      ${P.exit ? `<p style="margin:8px 0 2px"><b>Emergency exit</b> T${P.exit.k}, box ${P.exit.k + st.es} side: opening ${fmt(P.exit.width)}, then a ${EXIT_LANE_W} ft lane ${st.ea ? 'toward the regular exit' : 'turned ' + Math.round(P.exit.ang) + '° from straight out'}; clear outside (${EXIT_LAND} ft landing, ${EXIT_LANE} ft lane): <span class="${P.exit.blocked.length ? 'bad' : 'ok'}">${P.exit.blocked.length ? 'blocked by ' + P.exit.blocked.join(', ') : 'clear'}</span></p>` : '<p class="mut" style="margin:8px 0 2px">No emergency exit (tap a turn to add one)</p>'}
+      ${clothInfo()}
+      <p class="mut" style="margin:8px 0 2px">Nearest things (edge to edge)</p>
+      <table>${nrows}<tr><td>corners off the lawn</td><td class="${out ? 'bad' : 'ok'}">${out}</td></tr></table>
+      <p class="mut">Box 3 at ${st.mx.toFixed(1)}, ${st.my.toFixed(1)} ft · In end ${P.inEnd[0].toFixed(1)}, ${P.inEnd[1].toFixed(1)} · bearing ${st.br}°</p>`;
+  }
+
+  // the cloth in short: each strip's length and the rolls it takes
+  const sideN = s => (s < 0 ? 'Left' : 'Right');
+  function stripRows() {
+    const rows = [], R = n => C.rolls.find(r => r.n === n);
+    const of = key => C.pieces.filter(p => p.strip === key), rollsOf = ps => [...new Set(ps.map(p => p.roll))];
+    const spare = ps => { const rs = rollsOf(ps).map(R).filter(Boolean); return rs.every(r => r.pieces.every(n => ps.some(p => p.name === n))) ? rs.reduce((a, r) => a + r.spare, 0) : null; };
+    const row = (name, len, ps, note) => { const bad = ps.some(p => !p.roll), rs = rollsOf(ps), sp = spare(ps); rows.push({ name, len, bad, text: (bad ? 'longer than a roll' : (rs.length > 1 ? 'rolls ' : 'roll ') + rs.join(', ')) + (note ? ' · ' + note : '') + (sp != null && !bad ? ` · ${fmt(sp)} spare` : '') }); };
+    row('Roof', C.roof.len, of('roof'), C.roofPath === 'outer' ? 'outer edge along each turn' : '');
+    [-1, 1].forEach(s => {
+      const S = C.sides[s], ps = of(String(s)), notes = [];
+      if (s === C.double) notes.push(S.len > C.roll ? `double except ${fmt(S.len - C.roll)} at each end` : 'double all along');
+      if (C.exit && C.exit.side === s) notes.push(`cut at the T${C.exit.turn} exit, ${fmt(C.overlap)} lap`);
+      row(sideN(s) + (s === C.double ? ' ×2' : ''), S.len, ps, notes.join(' · '));
+    });
+    return rows;
+  }
+  function clothInfo() {
+    const rows = stripRows(), n = C.rolls.length, ok = C.ok && n <= ROLLS;
+    return `<p style="margin:8px 0 2px"><b>Cloth</b> <span class="mut">6' wide rolls (4 × 50', 1 × 25'): roof plus 6 ft side strips</span></p>
+      <table>${rows.map(r => `<tr><td>${r.name}</td><td class="${r.bad ? 'bad' : ''}">${fmt(r.len)}</td></tr><tr><td colspan="2" class="mut" style="text-align:left">${r.text}</td></tr>`).join('')}
+      <tr><td>Rolls</td><td class="${ok ? 'ok' : 'bad'}">${n} of ${ROLLS}</td></tr>
+      ${C.caps.length ? `<tr><td>Turn caps</td><td class="mut">other cloth</td></tr><tr><td colspan="2" class="mut" style="text-align:left">${C.caps.map(c => `T${c.turn} ${fmt(c.along)} × ${fmt(c.depth)}`).join(' · ')}</td></tr>` : ''}</table>
+      <div class="row"><span class="mut grow">Two layers on</span><span class="seg">${[[-1, 'left'], [1, 'right'], [0, 'none']].map(([v, t]) => `<button data-cd="${v}" class="${st.cd === v ? 'on' : ''}">${t}</button>`).join('')}</span></div>`;
+  }
+
+  // ---------- the build card: turn cords, cloth pieces with their marks, fasteners (printable) ----------
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  function cardHTML() {
+    const piece = p => {
+      const first = p.marks[0], start = !first ? '' : first.at < 0.01 ? `starts at ${first.name}` : `starts ${fmt(first.at)} before ${first.name}`;
+      const col = p.strip === 'roof' ? '#9d8cff' : +p.strip === st.cd ? SIDE_COL.dbl : SIDE_COL.one;
+      return `<h3><span class="sw" style="background:${col}"></span>${p.name[0].toUpperCase() + p.name.slice(1)} · roll ${p.roll || '?'} · ${fmt(p.len)}</h3>
+        <p class="mut">${p.strip === 'roof' ? (C.roofPath === 'outer' ? 'Centered over the arch tops; at each turn its outer edge is clipped along the 6 ft cord the whole way and the extra cloth on the inside is folded into a few pleats toward the inner gap and clipped' : 'Over the middle of every arch top and each hoop top') + (p.name === 'roof end' ? `, laps ${fmt(C.overlap)} under the roof's end` : '') : `${sideN(+p.strip)} side, ground up to 6 ft${p.layer === 2 ? ', over the first layer' : ''}`}; ${start}.</p>
+        <table><tr><th>mark</th><th>from this piece's start</th></tr>${p.marks.map(m => `<tr><td>${m.name}</td><td>${fmt(m.at)}</td></tr>`).join('')}<tr><td><i>end</i></td><td>${fmt(p.len)}</td></tr></table>`;
+    };
+    const seam = C.sides[-1].len + C.sides[1].len;
+    const rw = S.trees.filter(t => t[0] === 'redwood').slice(0, 2), ends = [['In', P.inEnd], ['Out', P.outEnd]];
+    const refs = rw.map((t, i) => `<tr><td>${i ? 'east' : 'west'} redwood trunk</td>${ends.map(([, e]) => `<td>${fmt(dist([t[1], t[2]], e) - ((t[6] && t[6].dbh) || 1) / 2)}</td><td>______</td>`).join('')}</tr>`).join('');
+    return `<div class="top"><h2 class="grow">Build card</h2><button data-card="print">Print</button><button data-card="close">Close</button></div>
+      <p class="mut">Layout: ${esc(stateText())}</p>
+      <h3>1. Boxes</h3>
+      <p>Set every arch unit to its 5'11" width. Each box is a 5'11" square, 8'4" corner to corner. Number them 1 to 5 from the In end and mark each unit's width setting with a paint pen so it goes back the same way next year.</p>
+      <h3>2. Stake out, starting at the Out end</h3>
+      ${(() => { const K = P.stakes, nr = K.near === 'L' ? 'left' : 'right', fr = K.near === 'L' ? 'right' : 'left'; return `<p>Left and right are as you walk in from the In end (left is the street side). <b>Box ${K.box}:</b> put its ${nr} Out leg ${fmt(Math.max(0, K.out[K.near].d))} from the ${K.ref.name}'s edge, about ${fmt(K.along)} from ${K.bend}. Swing the box until its ${fr} Out leg is ${fmt(K.out[K.near === 'L' ? 'R' : 'L'].d)} from the same edge, measured square off it.</p>
+      <p>Then each box from the one before it. Tie cords to these lengths with a loop at each end and reuse them every year.</p>
+      <table><tr><th>box</th><th>its left leg to box before's left leg</th><th>right leg to right leg</th><th>cross</th><th>hoop stake from the two outer legs</th></tr>${K.steps.map(s => `<tr><td>${s.box} (after ${s.from}, T${s.turn})</td><td>${fmt(s.LL)}</td><td>${fmt(s.RR)}</td><td>${fmt(s.crossD)}: box ${s.box}'s ${s.inner} leg to box ${s.from}'s ${s.outer} leg</td><td>${fmt(s.fa)} from box ${s.box}'s ${s.outer} leg, ${fmt(s.fb)} from box ${s.from}'s</td></tr>`).join('')}</table>
+      <p class="mut">Two lengths alone let a box swing; the cross locks it. Check: the hoop runs from the middle of the inner gap to the stake, 5'11".</p>`; })()}
+      <h3>3. Cloth</h3>
+      <p>${C.rolls.map(r => `Roll ${r.n}${r.size !== C.roll ? ` (${fmt(r.size)})` : ''}: ${r.pieces.join(' + ')} (${fmt(r.spare)} spare)`).join('. ')}.${C.rolls.length > ROLLS ? ` <span class="bad">That is ${C.rolls.length} rolls; you have ${ROLLS}.</span>` : ''}</p>
+      <p>The first time, write each mark on the cloth's bottom edge with a paint pen, and IN at the start. Roll each piece up from its far end so it unrolls from the In end. Next year, line the marks up with the frame corners. Side strips go on first${C.caps.length ? ', then the turn caps' : ''}, then the roof.</p>
+      ${C.pieces.map(piece).join('')}
+      ${C.caps.length ? `<h3><span class="sw" style="background:#ffb300"></span>Turn caps · from your other covers</h3>
+      <p>Over a turn the roof is too short on its outer side (cloth doesn't stretch), so its edge rises toward the top there. Each cap closes that: it hangs 6 in over the side strip's top at the 6 ft cord, runs up over the outer half of the hoop and the two end arches, and tucks 1 ft under the roof past the middle. Gather its upper edge into pleats; clip it to the cord and the hoop every foot.</p>
+      <table><tr><th>turn</th><th>along the wall (cut length)</th><th>up over the hoop</th></tr>${C.caps.map(c => `<tr><td>T${c.turn}</td><td>${fmt(c.along)}</td><td>${fmt(c.depth)}</td></tr>`).join('')}</table>` : ''}
+      <h3>4. Seams and fasteners</h3>
+      <ul>
+        <li>The roof's edges meet the side strips' tops at about 6 ft: a clip every foot, about ${Math.ceil(seam)} spring clamps or large binder clips.</li>
+        <li>Bottom edge: a 6 in landscape staple with a plastic washer, or a sandbag, every 2 ft: about ${Math.ceil(seam / 2)}.</li>
+        <li>Side strips to the frames: greenhouse snap clamps sized to the frame tube, on the rungs and arch legs. At each turn's outer wall the strip's top ties to a cord at 6 ft, from corner leg to the hoop to corner leg.</li>
+        ${C.exit ? `<li>Emergency exit (T${C.exit.turn}): the ${sideN(C.exit.side).toLowerCase()} strip is cut at the hoop's stake. The piece over the opening laps ${fmt(C.overlap)} over the other one, held by 3 magnets or clips so it pushes open; leave its bottom on sandbags, not staples.</li>` : ''}
+        <li>Measure one arch from the ground over the top to the ground. If it is more than about 18', the roof and side strips no longer meet: cover the seam with strips cut from the spare cloth.</li>
+        <li>Take-down: let the cloth dry before rolling it (fog fluid and dew cause mildew); keep the clips and cords in bags per turn.</li>
+      </ul>
+      <h3>5. Where it stands</h3>
+      <p>The first year, place it by the plan, then measure from the trunks to the In and Out corners and write the numbers here. Next year start from these. Plan estimates:</p>
+      <table><tr><th></th><th>In (plan)</th><th>In (measured)</th><th>Out (plan)</th><th>Out (measured)</th></tr>${refs}</table>`;
+  }
+  const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+  // ---------- the popup for a tapped box or turn ----------
+  function popHTML() {
+    if (sel.type === 'unit') {
+      const k = sel.k;
+      const sw = `<button data-act="sw:-5">↺ 5°</button><button data-act="sw:-1">↺ 1°</button><button data-act="sw:1">1° ↻</button><button data-act="sw:5">5° ↻</button>`;
+      if (k === MID) return `<div class="ph"><b>Box 3, the middle</b><button data-act="close">×</button></div><div class="row">Turn the tunnel</div><div class="row">${sw}</div><div class="mut">Drag this box to move the tunnel. Bearing ${st.br}°.</div>`;
+      const t = k > MID ? k - 1 : k, T = L.turns[t - 1], past = k === 1 || k === 5 ? '' : ` and box ${k < MID ? 1 : 5}`;
+      return `<div class="ph"><b>Box ${k}</b><button data-act="close">×</button></div><div class="row">Swing</div><div class="row">${sw}</div>
+        <div class="mut">Turns box ${k}${past} around T${t} (now ${(180 - Math.abs(T.turnDeg)).toFixed(0)}°).${st.lk ? ' Bend all together is on: every turn bends.' : ''} Or drag the box.</div>`;
+    }
+    const k = sel.k, T = L.turns[k - 1], ang = 180 - Math.abs(T.turnDeg);
+    return `<div class="ph"><b>T${k}, ${T.side > 0 ? 'right' : 'left'} turn</b><button data-act="close">×</button></div>
+      <div class="row"><span class="grow">Angle</span><button data-act="ang:-5">−5</button><button data-act="ang:-1">−1</button><span class="num">${ang.toFixed(0)}°</span><button data-act="ang:1">+1</button><button data-act="ang:5">+5</button></div>
+      <div class="row"><span class="grow">Gap</span><button data-act="gap:-1">−1"</button><span class="num">${fmt(T.gap)}</span><button data-act="gap:1">+1"</button><button data-act="gapall">all</button></div>
+      <div class="row"><span class="grow">Emergency exit</span><button data-act="ex:0" class="${st.ex === k && !st.es ? 'on' : ''}">box ${k} side</button><button data-act="ex:1" class="${st.ex === k && st.es ? 'on' : ''}">box ${k + 1} side</button>${st.ex === k ? '<button data-act="exoff">none</button>' : ''}</div>
+      ${st.ex === k ? `<div class="row"><span class="grow">Way out</span><button data-act="ed:-15">↺ 15°</button><button data-act="eaim" class="${st.ea ? 'on' : ''}">to Out</button><button data-act="ed:15">15° ↻</button></div>` : ''}
+      <div class="mut">Angle between box ${k} and box ${k + 1} (180 = straight). Outer wall ${fmt(T.wall)} · fiberglass hoop ${fmt(T.hoopSpan)}</div>`;
+  }
+  function placePop() {
+    const pop = $('pop');
+    if (!sel) { pop.classList.remove('on'); return; }
+    const key = sel.type + sel.k + JSON.stringify(st);
+    if (pop.dataset.key !== key) { pop.innerHTML = popHTML(); pop.dataset.key = key; }
+    pop.classList.add('on');
+    if (innerWidth > 700) { pop.style.left = '10px'; pop.style.top = ($('bar').getBoundingClientRect().bottom + 10) + 'px'; }   // under the bar (a phone: docked at the bottom)
+  }
+  $('pop').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const [act, v] = b.dataset.act.split(':');
+    if (act === 'close') { sel = null; draw(); return; }
+    snap();
+    if (act === 'sw') swing(sel.k, +v);
+    else if (act === 'ang') openTurn(sel.k, +v);
+    else if (act === 'gap') st['g' + sel.k] = Math.max(0, Math.round((st['g' + sel.k] + v / 12) * 120) / 120);
+    else if (act === 'gapall') GK.forEach(k => st[k] = st['g' + sel.k]);
+    else if (act === 'ex') { st.ex = sel.k; st.es = +v; }
+    else if (act === 'exoff') st.ex = 0;
+    else if (act === 'eaim') st.ea = 1;
+    else if (act === 'ed') { st.ed = Math.max(-EXIT_TURN, Math.min(EXIT_TURN, Math.round(P.exit.ang) + +v)); st.ea = 0; }
+    update();
+  });
+
+  // ---------- state ----------
+  const r2 = v => Math.round(v * 100) / 100;
+  // the whole layout as one pastable line (turn angles, In and Out ends and run are for reading; loading ignores them)
+  const stateText = () => JSON.stringify({ angle: st.a, bends: BK.map(k => st[k]), gaps: GK.map(k => r2(st[k])), bearing: st.br, middle: [r2(st.mx), r2(st.my)], hoopMin: HOOP_MIN, emergencyExit: st.ex ? { turn: st.ex, side: 'box ' + (st.ex + st.es), wayOut: st.ea ? 'toward the regular exit' : st.ed } : null, turnAngles: L.turns.map(t => r2(180 - Math.abs(t.turnDeg))), inEnd: P.inEnd.map(r2), outEnd: P.outEnd.map(r2), run: r2(L.runLen), cloth: { double: st.cd < 0 ? 'left' : st.cd > 0 ? 'right' : 'none', roof: r2(C.roof.len), left: r2(C.sides[-1].len), right: r2(C.sides[1].len), rolls: C.rolls.length } });
+  function loadState(t) {
+    const j = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));
+    if (typeof j.angle !== 'number' || !Array.isArray(j.middle)) throw new Error('not a layout');
+    st.a = j.angle; if (j.bearing != null) st.br = j.bearing;
+    (j.bends || []).forEach((v, i) => { if (BK[i]) st[BK[i]] = v; });
+    if (j.gaps) j.gaps.forEach((v, i) => { if (GK[i]) st[GK[i]] = v; }); else if (j.gap != null) GK.forEach(k => st[k] = j.gap);
+    [st.mx, st.my] = j.middle;
+    if (j.cloth && j.cloth.double) st.cd = { left: -1, right: 1, none: 0 }[j.cloth.double] || 0;
+    if (j.emergencyExit) { const E = j.emergencyExit; st.ex = E.turn; st.es = E.side === 'box ' + (st.ex + 1) ? 1 : 0; st.ea = typeof E.wayOut === 'number' ? 0 : 1; if (st.ea === 0) st.ed = E.wayOut; } else if ('emergencyExit' in j) st.ex = 0;
+  }
+  function sync() {
+    document.querySelectorAll('[data-a]').forEach(b => b.classList.toggle('on', +b.dataset.a === st.a && BK.every(k => !st[k])));
+    $('one').classList.toggle('on', !st.lk); $('all').classList.toggle('on', !!st.lk);
+    $('nums').classList.toggle('on', !document.body.classList.contains('nonum'));
+    history.replaceState(null, '', '#' + ['a', ...BK, ...GK, 'br', 'mx', 'my', 'lk', 'ex', 'es', 'ea', 'ed', 'cd'].map(k => k + '-' + (+st[k].toFixed(3))).join(','));
+    if (document.activeElement !== $('state')) { $('state').value = stateText(); $('state').classList.remove('bad'); }
+  }
+  function update() { compute(); sync(); info(); draw(); }
+
+  // ---------- controls ----------
+  document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { snap(); st.a = +b.dataset.a; BK.forEach(k => st[k] = 0); update(); });
+  $('one').onclick = () => { st.lk = 0; update(); };
+  $('all').onclick = () => { st.lk = 1; update(); };
+  ['sat', 'can', 'clo', 'stk'].forEach(id => $(id).onchange = draw);
+  $('info').addEventListener('click', e => { const b = e.target.closest('[data-cd]'); if (!b) return; snap(); st.cd = +b.dataset.cd; update(); });
+  $('cardb').onclick = () => { $('card').innerHTML = cardHTML(); $('card').classList.add('on'); $('card').scrollTop = 0; };
+  $('card').addEventListener('click', e => { const b = e.target.closest('[data-card]'); if (!b) return; if (b.dataset.card === 'print') print(); else $('card').classList.remove('on'); });
+  $('nums').onclick = () => { document.body.classList.toggle('nonum'); sync(); };
+  $('undo').onclick = undo;
+  $('reset').onclick = () => { snap(); Object.assign(st, DEF, { lk: st.lk }); update(); };
+  $('fit').onclick = () => { fit(); draw(); };
+  $('copy').onclick = () => {
+    const t = 'zigzag ' + stateText();
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('copy').textContent = 'Copied'; setTimeout(() => $('copy').textContent = 'Copy state', 1200); }, () => { $('state').parentNode.open = true; $('state').focus(); $('state').select(); });
+  };
+  $('state').oninput = e => { try { snap(); loadState(e.target.value); e.target.classList.remove('bad'); update(); } catch (_) { e.target.classList.add('bad'); } };
+  $('state').onblur = () => sync();
+  addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
+    if ((e.target.tagName === 'INPUT' && e.target.type !== 'checkbox') || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') { if ($('card').classList.contains('on')) { $('card').classList.remove('on'); return; } sel = null; draw(); return; }
+    const s = e.shiftKey ? 2 : 0.5, k = e.key;
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'q', 'Q', 'e', 'E'].includes(k)) return;
+    snap();
+    if (k === 'ArrowLeft') st.mx -= s; else if (k === 'ArrowRight') st.mx += s; else if (k === 'ArrowUp') st.my += s; else if (k === 'ArrowDown') st.my -= s;
+    else swing(MID, k.toLowerCase() === 'q' ? -1 : 1);
+    e.preventDefault(); update();
+  });
+  // the tunnel in the screen area the panels leave free
+  function fit() {
+    const pts = P.foot.flat(); let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    pts.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); });
+    const bar = $('bar').getBoundingClientRect(), inf = $('info').getBoundingClientRect(), phone = innerWidth <= 700;
+    const r = phone ? [0, bar.bottom, W, H - (sel ? 190 : 10)] : [bar.right, 0, inf.width ? inf.left : W, H];
+    const m = 8, rw = r[2] - r[0], rh = r[3] - r[1];
+    view.s = Math.min(rw / (x1 - x0 + 2 * m), rh / (y1 - y0 + 2 * m));
+    view.cx = (x0 + x1) / 2 - ((r[0] + r[2]) / 2 - W / 2) / view.s; view.cy = (y0 + y1) / 2 + ((r[1] + r[3]) / 2 - H / 2) / view.s;
+  }
+
+  // ---------- pointer: tap selects; drag a box swings it, box 3 moves the tunnel, ↻ or Shift-drag turns it, else pan ----------
+  // where box k swings around: the middle of the turn between it and the middle box
+  function pivotOf(k) { return P.turns[(k > MID ? k - 1 : k) - 1].center; }
+  function hitTest(x, y) {
+    if (P.exit && Math.hypot(x - sx(P.exit.handle[0]), y - sy(P.exit.handle[1])) < 16) return { type: 'exitrot' };
+    if (Math.hypot(x - sx(P.handle[0]), y - sy(P.handle[1])) < 20) return { type: 'handle' };
+    const c = chips.find(c => x >= c.r[0] && x <= c.r[2] && y >= c.r[1] && y <= c.r[3]); if (c) return { type: 'turn', k: c.k };
+    const p = [fx(x), fy(y)];
+    const u = P.units.find(u => inPoly(p, u.corners)); if (u) return { type: 'unit', k: u.k };
+    const t = P.turns.find(t => inPoly(p, t.floor)); if (t) return { type: 'turn', k: t.k };
+    return null;
+  }
+  const angAt = (c, x, y) => Math.atan2(fy(y) - c[1], fx(x) - c[0]) * 180 / Math.PI;
+  const wrap = d => ((d + 540) % 360) - 180;
+  const ptrs = new Map(); let g = null, pinch = null;
+  cv.addEventListener('pointerdown', e => {
+    cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
+    if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), s: view.s }; g = { mode: 'pinch' }; return; }
+    g = { mode: 'tap', hit: hitTest(e.offsetX, e.offsetY), x0: e.offsetX, y0: e.offsetY, last: [e.offsetX, e.offsetY], shift: e.shiftKey };
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId)) { const h = hitTest(e.offsetX, e.offsetY); cv.style.cursor = !h ? 'default' : h.type === 'turn' ? 'pointer' : h.type === 'unit' && h.k === MID ? 'move' : 'grab'; return; }
+    ptrs.set(e.pointerId, [e.offsetX, e.offsetY]);
+    if (g.mode === 'pinch') { if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; view.s = Math.max(1, Math.min(60, pinch.s * Math.hypot(a[0] - b[0], a[1] - b[1]) / pinch.d)); draw(); } return; }
+    if (g.mode === 'tap') {
+      if (Math.hypot(e.offsetX - g.x0, e.offsetY - g.y0) < 5) return;
+      const h = g.hit;
+      if (h && h.type === 'exitrot') g.mode = 'exitrot';
+      else if (h && (h.type === 'handle' || g.shift)) Object.assign(g, { mode: 'swing', k: MID, c: P.pivot });
+      else if (h && h.type === 'unit' && h.k !== MID) Object.assign(g, { mode: 'swing', k: h.k, c: pivotOf(h.k) });
+      else if (h && h.type === 'unit') g.mode = 'move';
+      else g.mode = 'pan';
+      if (g.mode !== 'pan' && g.mode !== 'exitrot') { g.base = Object.assign({}, st); g.a0 = g.c && angAt(g.c, g.x0, g.y0); if (h.type === 'unit') sel = { type: 'unit', k: h.k }; }
+      if (g.mode !== 'pan') snap();
+      cv.style.cursor = 'grabbing';
+    }
+    const dx = e.offsetX - g.last[0], dy = e.offsetY - g.last[1]; g.last = [e.offsetX, e.offsetY];
+    if (g.mode === 'exitrot') {   // the lane points at the pointer, within 90 degrees of straight out
+      const E = P.exit, v = [fx(e.offsetX) - E.mid[0], fy(e.offsetY) - E.mid[1]], n = E.n;
+      st.ed = Math.round(Math.max(-EXIT_TURN, Math.min(EXIT_TURN, -Math.atan2(n[0] * v[1] - n[1] * v[0], n[0] * v[0] + n[1] * v[1]) * 180 / Math.PI))); st.ea = 0; update();
+    }
+    else if (g.mode === 'swing') { Object.assign(st, g.base); swing(g.k, -wrap(angAt(g.c, e.offsetX, e.offsetY) - g.a0)); update(); }
+    else if (g.mode === 'move') { st.mx = Math.round((st.mx + dx / view.s) * 100) / 100; st.my = Math.round((st.my - dy / view.s) * 100) / 100; update(); }
+    else if (g.mode === 'pan') { view.cx -= dx / view.s; view.cy += dy / view.s; draw(); }
+  });
+  const up = e => {
+    if (!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId);
+    if (g && g.mode === 'tap') { const h = g.hit; sel = h && (h.type === 'unit' || h.type === 'turn') ? { type: h.type, k: h.k } : null; draw(); }
+    if (!ptrs.size) g = null; else if (g && g.mode === 'pinch') { const [p] = [...ptrs.values()]; g = { mode: 'pan', last: p }; }
+    cv.style.cursor = '';
+  };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('wheel', e => {
+    e.preventDefault(); const X = fx(e.offsetX), Y = fy(e.offsetY);
+    view.s = Math.max(1, Math.min(60, view.s * Math.exp(-e.deltaY * 0.0015)));
+    view.cx = X - (e.offsetX - W / 2) / view.s; view.cy = Y + (e.offsetY - H / 2) / view.s; draw();
+  }, { passive: false });
+  addEventListener('resize', resize);
+  if (innerWidth <= 700) document.body.classList.add('nonum');
+  compute(); W = cv.clientWidth; H = cv.clientHeight; fit(); resize(); update();
+  window.__plan = { st, get L() { return L; }, get P() { return P; }, get sel() { return sel; }, update, view, swing, undo };
+})();
+</script>
+</body>
+</html>
