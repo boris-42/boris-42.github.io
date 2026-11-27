@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fries">
+  <meta name="theme-color" content="#000000">
+  <title>Fries timer</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css?v=2e855867e1">
+</head>
+<body class="screen">
+  <main class="fryers">
+    <section class="fryer" data-id="L" data-phase="idle"></section>
+    <section class="fryer" data-id="R" data-phase="idle"></section>
+  </main>
+  <button id="gear" class="gear" type="button" aria-label="Settings">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>
+      </svg>
+  </button>
+  <div id="settings" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-win" role="dialog" aria-modal="true" aria-label="Settings">
+      <header class="modal-head">
+        <h1>Settings</h1>
+        <button class="modal-x" type="button" aria-label="Close">✕</button>
+      </header>
+      <div class="modal-body settings-ui"></div>
+      <footer class="modal-foot">
+        <span class="s-status"></span>
+        <button id="copyLink" type="button">Copy setup link</button>
+        <a href="stats.html">Stats</a>
+        <button id="fs" type="button">Fullscreen</button>
+      </footer>
+    </div>
+  </div>
+  <div id="notice" class="notice"></div>
+  <noscript><p style="padding:2em">This app needs JavaScript.</p></noscript>
+  <script src="js/common.js?v=d6ce357c5e"></script>
+  <script src="js/settings.js?v=0916480bf5"></script>
+  <script src="js/fryer.js?v=ff1f2447e3"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>

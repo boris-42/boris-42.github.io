@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090c">
+  <title>Fries timer · Stats</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css?v=2e855867e1">
+</head>
+<body class="page">
+  <div class="topbar">
+    <span class="brand">Fries timer · Stats</span>
+    <nav>
+      <a href="index.html">Fryer screen</a>
+      <a href="index.html#settings">Settings</a>
+    </nav>
+  </div>
+  <div class="wrap">
+    <div class="toolbar">
+      <label>Day <select id="day"></select></label>
+      <button class="btn" id="refresh" type="button">Refresh</button>
+      <span class="spacer"></span>
+      <button class="btn" id="exportCsv" type="button">Export steps CSV</button>
+      <button class="btn" id="exportJson" type="button">Export events JSON</button>
+      <button class="btn danger" id="deleteDay" type="button">Delete this day</button>
+    </div>
+    <div id="storage" class="muted"></div>
+    <div id="out"></div>
+  </div>
+  <script src="js/common.js?v=d6ce357c5e"></script>
+  <script src="js/stats.js?v=c3a3531494"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
