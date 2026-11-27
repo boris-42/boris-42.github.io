@@ -73,89 +73,94 @@ body.screen { overflow: hidden; background: #000; user-select: none; -webkit-use
 .fryer[data-id="R"]::before { box-shadow: inset -3px 0 0 var(--id);
   background: radial-gradient(100% 65% at 100% 50%, var(--glow), transparent 70%); }
 
-/* state: same meaning on both sides. Dark tint on the panel, the color itself on the timer and rail. */
+/* state: same meaning on both sides. Dark tint on the panel, the color itself on the timer and rail.
+   The due/late pulse fades an overlay (cheap for the GPU) instead of repainting the whole panel. */
 .fryer[data-phase="soon"] { --tm: #ecd27e; background-color: #1d2430; }
-.fryer[data-phase="due"] { --tm: #6af2d0; background-color: #10302e; animation: due 1.6s ease-in-out infinite; }
-.fryer[data-phase="late"] { --tm: #ff6873; background-color: #33171e; animation: late 1s ease-in-out infinite; }
+.fryer[data-phase="due"] { --tm: #6af2d0; --pulse: #1f6a5c; background-color: #10302e; }
+.fryer[data-phase="late"] { --tm: #ff6873; --pulse: #7a2532; background-color: #33171e; }
 .fryer[data-phase="break"] { --tm: #9fb3c6; background-color: #1a2430; }
-@keyframes due { 50% { background-color: #174640; } }
-@keyframes late { 50% { background-color: #51202a; } }
+.fryer::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0;
+  background: var(--pulse, transparent); will-change: opacity; }
+.fryer[data-phase="due"]::after { animation: pulse 1.6s ease-in-out infinite; }
+.fryer[data-phase="late"]::after { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .45; } }
 
-/* the rail (a big circle centered outside the panel) and the progress line on it */
+/* the rail (a big circle centered outside the panel) and the progress line on it (a soft wide stroke = glow, no filters) */
 .rail { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
 .rail .track { fill: none; stroke: var(--id); stroke-opacity: .32; stroke-width: 1.5; }
 .rail .ticks { fill: none; stroke: var(--id); stroke-opacity: .18; stroke-width: 10; }
-.rail .prog { fill: none; stroke: var(--id); stroke-width: 7; stroke-linecap: round;
-  filter: drop-shadow(0 0 6px var(--id)); }
-.fryer[data-phase="soon"] .rail .prog, .fryer[data-phase="due"] .rail .prog, .fryer[data-phase="late"] .rail .prog {
-  stroke: var(--tm); filter: drop-shadow(0 0 8px var(--tm)); }
+.rail .prog, .rail .progGlow { fill: none; stroke: var(--id); stroke-linecap: round; }
+.rail .prog { stroke-width: 7; }
+.rail .progGlow { stroke-width: 18; stroke-opacity: .22; }
+.fryer[data-phase="soon"] .rail :is(.prog, .progGlow), .fryer[data-phase="due"] .rail :is(.prog, .progGlow),
+.fryer[data-phase="late"] .rail :is(.prog, .progGlow) { stroke: var(--tm); }
 
-/* wheel items: past = small, gray, struck; now = big, white; future = medium, side-tinted */
+/* wheel items. Smooth on older iPads: during a roll only transform/opacity change (GPU), never font sizes.
+   .item = position on the arc (moves), .dot = marker on the rail, .txt = name + time (scales). */
 .items { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
-.item { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; white-space: nowrap;
-  line-height: 1.08; will-change: transform, opacity;
-  transition: transform .8s cubic-bezier(.34, 1.28, .5, 1), opacity .6s ease, color .6s ease; }
-.fryer[data-id="L"] .item { align-items: flex-start; text-align: left; }
-.fryer[data-id="R"] .item { align-items: flex-end; text-align: right; }
-.item .nm { position: relative; font-size: calc(var(--u) * 3.6); font-weight: 700;
-  transition: font-size .7s cubic-bezier(.22, 1, .36, 1); }
-.item .sub { font-size: calc(var(--u) * 2.6); font-weight: 600; font-variant-numeric: tabular-nums; opacity: .8;
-  transition: font-size .7s cubic-bezier(.22, 1, .36, 1), opacity .6s ease, color .6s ease; }
-.item .dot { position: absolute; top: 50%; width: calc(var(--u) * 1.5); height: calc(var(--u) * 1.5); border-radius: 50%;
-  background: var(--id); transition: width .6s ease, height .6s ease, background-color .6s ease, box-shadow .6s ease; }
-.fryer[data-id="L"] .item .dot { left: calc(-1 * var(--gap)); transform: translate(-50%, -50%); }
-.fryer[data-id="R"] .item .dot { right: calc(-1 * var(--gap)); transform: translate(50%, -50%); }
+.item { position: absolute; left: 0; top: 0; will-change: transform, opacity;
+  transition: transform .75s cubic-bezier(.3, 1.22, .5, 1), opacity .5s ease; }
+.item .txt { display: flex; flex-direction: column; white-space: nowrap; line-height: 1.08; color: var(--c, #fff);
+  transform: translateY(0) scale(var(--s, .46)); transition: transform .75s cubic-bezier(.3, 1.22, .5, 1), color .5s ease; }
+.fryer[data-id="L"] .item .txt { align-items: flex-start; text-align: left; transform-origin: 0 50%; }
+.fryer[data-id="R"] .item .txt { align-items: flex-end; text-align: right; transform-origin: 100% 50%; }
+.item .nm { position: relative; font-size: calc(var(--u) * 6.6); font-weight: 700; }
+.item .sub { font-size: calc(var(--u) * 4.4); font-weight: 600; font-variant-numeric: tabular-nums; opacity: .8;
+  transition: opacity .4s ease; }
+.item .dot { position: absolute; top: 50%; width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); border-radius: 50%;
+  background: var(--id); transition: transform .6s ease, background-color .5s ease, box-shadow .5s ease; }
+.fryer[data-id="L"] .item .dot { left: calc(-1 * var(--gap)); transform: translate(-50%, -50%) scale(var(--ds, .44)); }
+.fryer[data-id="R"] .item .dot { right: calc(-1 * var(--gap)); transform: translate(50%, -50%) scale(var(--ds, .44)); }
 
-.item.cur { color: #fff; }
-.item.cur .nm { font-size: min(calc(var(--u) * 6.6), calc(var(--w) * 7)); font-weight: 700; }
-.item.cur .sub { font-size: var(--timer); font-weight: 700; line-height: .92; opacity: 1; letter-spacing: 0; color: var(--tm);
-  transition: font-size .7s cubic-bezier(.22, 1, .36, 1), color .4s ease; }
-.fryer[data-phase="due"] .item.cur .sub, .fryer[data-phase="late"] .item.cur .sub { text-shadow: 0 0 calc(var(--u) * 3) var(--tm); }
-.item.cur .dot { width: calc(var(--u) * 3); height: calc(var(--u) * 3); background: #fff;
-  box-shadow: 0 0 0 calc(var(--u) * .6) var(--id), 0 0 calc(var(--u) * 3) var(--id); }
-.item.cur.ready .sub { font-size: calc(var(--timer) * .42); opacity: .45; }
-.fryer[data-phase="break"] .item.cur .sub { opacity: .7; }
-
-.item.next { color: var(--id-next); }
-.item.next.d1 .nm { font-size: calc(var(--u) * 4.2); }
-.item.next.d1 .sub { font-size: calc(var(--u) * 3); }
-.item.next.d2 { opacity: .42; }
-.item.next.d2 .nm { font-size: calc(var(--u) * 3); }
-.item.next.d2 .sub { font-size: calc(var(--u) * 2.3); }
-.item.d2 .dot { width: calc(var(--u) * 1); height: calc(var(--u) * 1); }
-
-.item.past { color: rgba(154, 166, 182, .7); opacity: 1; } /* text fades, the ✓/✕ dot stays bright */
-.item.past.d2 { opacity: .45; }
-.item.past .nm { font-size: calc(var(--u) * 3.1); font-weight: 600; }
-.item.past.d2 .nm { font-size: calc(var(--u) * 2.5); }
-.item.past .sub { font-size: calc(var(--u) * 2.3); }
-.item.past .dot { background: transparent; box-shadow: inset 0 0 0 2px #9aa6b6; }
-/* done steps: the result sits in the dot on the rail, ✓ on time / ✕ missed */
-.item.past.on_time .dot, .item.past.late .dot, .item.past.early .dot {
-  width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); }
-.item.past.d2.on_time .dot, .item.past.d2.late .dot, .item.past.d2.early .dot {
-  width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); }
+/* now: big white name above the separate countdown (.bigtimer); its own small time line is hidden */
+.item.cur { --s: 1; --ds: .88; }
+.item.cur .txt { transform: translateY(var(--cur-dy)) scale(1); }
+.fryer[data-phase="idle"] .item.cur .txt, .fryer[data-phase="break"] .item.cur .txt { transform: translateY(var(--cur-dy-small)) scale(1); }
+.item.cur .sub { opacity: 0; }
+.item.cur .dot { background: #fff; box-shadow: 0 0 0 calc(var(--u) * .7) var(--id), 0 0 calc(var(--u) * 3.4) var(--id); }
+/* future: side-tinted, smaller */
+.item.next { --c: var(--id-next); }
+.item.next.d1 { --s: .64; }
+.item.next.d2 { --s: .46; --ds: .3; opacity: .42; }
+/* past: gray, struck, smallest; the ✓/✕ result sits in the dot */
+.item.past { --c: rgba(154, 166, 182, .7); --s: .47; }
+.item.past.d2 { --s: .38; --ds: .3; opacity: .45; }
+.item.past .dot { background: transparent; box-shadow: inset 0 0 0 4px #9aa6b6; }
+.item.past.on_time, .item.past.late, .item.past.early { --ds: 1; }
+.item.past.d2.on_time, .item.past.d2.late, .item.past.d2.early { --ds: .68; }
 .item.past.on_time .dot { background: rgba(106, 242, 208, .16); box-shadow: inset 0 0 0 2px #6af2d0; }
 .item.past.late .dot, .item.past.early .dot { background: rgba(255, 104, 115, .16); box-shadow: inset 0 0 0 2px #ff6873; }
 .item .dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: center / 62% no-repeat;
   opacity: 0; transform: scale(.4); transition: opacity .35s ease .35s, transform .45s cubic-bezier(.3, 1.6, .5, 1) .35s; }
 .item.past.on_time .dot::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.5 12.5l4.3 4.3L18.5 7.8' fill='none' stroke='%236af2d0' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); opacity: 1; transform: none; }
 .item.past.late .dot::after, .item.past.early .dot::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7.5 7.5l9 9M16.5 7.5l-9 9' fill='none' stroke='%23ff6873' stroke-width='3.2' stroke-linecap='round'/%3E%3C/svg%3E"); opacity: 1; transform: none; }
-/* strike line draws across when a step rolls into the past */
-.item .nm::after { content: ""; position: absolute; top: 55%; height: .08em; width: 0; background: currentColor;
-  transition: width .45s ease .3s; }
-.fryer[data-id="L"] .item .nm::after { left: 0; }
-.fryer[data-id="R"] .item .nm::after { right: 0; }
-.item.past .nm::after { width: 100%; }
+/* strike line draws across when a step rolls into the past (transform only) */
+.item .nm::after { content: ""; position: absolute; left: 0; right: 0; top: 55%; height: .08em; background: currentColor;
+  transform: scaleX(0); transition: transform .45s ease .3s; }
+.fryer[data-id="L"] .item .nm::after { transform-origin: 0 50%; }
+.fryer[data-id="R"] .item .nm::after { transform-origin: 100% 50%; }
+.item.past .nm::after { transform: scaleX(1); }
 
 /* step is due: the next item calls */
-.item.next.go { color: var(--tm); opacity: 1; }
+.item.next.go { --c: var(--tm); opacity: 1; }
 .item.next.go .nm { animation: call .9s ease-in-out infinite; }
 .item.next.go .dot { background: var(--tm); box-shadow: 0 0 calc(var(--u) * 2) var(--tm); }
 @keyframes call { 50% { opacity: .45; } }
-/* refused early press: the current step shakes */
-.item.nope .nm, .item.nope .sub { animation: nope .4s ease; }
-@keyframes nope { 20%, 60% { transform: translateX(-1.2vh); } 40%, 80% { transform: translateX(1.2vh); } }
+
+/* the countdown: one fixed element next to the current dot. It never travels with the wheel; on a new step it fades in. */
+.bigtimer { position: absolute; z-index: 2; top: var(--timer-y); font-size: var(--timer); font-weight: 700; line-height: .92;
+  color: var(--tm); font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none;
+  transform: translateY(-50%) scale(1); transition: transform .6s cubic-bezier(.3, 1.2, .5, 1), opacity .4s ease, color .4s ease; }
+.fryer[data-id="L"] .bigtimer { left: var(--timer-x); transform-origin: 0 50%; }
+.fryer[data-id="R"] .bigtimer { right: var(--timer-x); transform-origin: 100% 50%; }
+.fryer[data-phase="idle"] .bigtimer { transform: translateY(-50%) scale(.42); opacity: .45; }
+.fryer[data-phase="break"] .bigtimer { transform: translateY(-50%) scale(.42); opacity: .7; }
+.fryer[data-phase="due"] .bigtimer, .fryer[data-phase="late"] .bigtimer { text-shadow: 0 0 calc(var(--u) * 3) var(--tm); }
+.bigtimer.swap { animation: swap .45s ease; }
+@keyframes swap { from { opacity: 0; } }
+/* refused early press: name and countdown shake */
+.item.nope .nm, .bigtimer.nope { animation: nope .4s ease; }
+@keyframes nope { 20%, 60% { margin-left: -1.2vh; } 40%, 80% { margin-left: 1.2vh; } }
 .item.gone { opacity: 0 !important; }
 
 /* top outer corner: today's stats as number-over-label cells */

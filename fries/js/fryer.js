@@ -450,11 +450,14 @@
     track.setAttribute('class', 'track');
     const ticks = document.createElementNS(SVGNS, 'circle');
     ticks.setAttribute('class', 'ticks');
+    const progGlow = document.createElementNS(SVGNS, 'path');
+    progGlow.setAttribute('class', 'progGlow');
     const prog = document.createElementNS(SVGNS, 'path');
     prog.setAttribute('class', 'prog');
-    svg.append(ticks, track, prog);
+    svg.append(ticks, track, progGlow, prog);
     const u = {
-      root, svg, track, ticks, prog,
+      root, svg, track, ticks, prog, progGlow,
+      timer: F.h('div', { class: 'bigtimer' }),
       items: F.h('div', { class: 'items' }),
       holdBar: F.h('div', { class: 'holdbar' }),
       holdTxt: F.h('div', { class: 'holdtxt' }),
@@ -495,7 +498,7 @@
       }
       updateBar(id, now);
     });
-    root.append(svg, u.items, u.stats, u.hold, F.h('div', { class: 'bar' }, u.key, F.h('div', { class: 'tbtns' }, u.resetBtn, u.nextBtn, u.pauseBtn)));
+    root.append(svg, u.items, u.timer, u.stats, u.hold, F.h('div', { class: 'bar' }, u.key, F.h('div', { class: 'tbtns' }, u.resetBtn, u.nextBtn, u.pauseBtn)));
     root.addEventListener('contextmenu', (e) => e.preventDefault());
     ui[id] = u;
     if ('ResizeObserver' in window) new ResizeObserver(() => layout(id)).observe(root);
@@ -522,7 +525,18 @@
     st.setProperty('--u', H / 100 + 'px');
     st.setProperty('--w', W / 100 + 'px');
     st.setProperty('--gap', gap + 'px');
-    st.setProperty('--timer', Math.min(0.26 * H, (W - x0 - gap - margin) / 2.6) + 'px'); // condensed digits: bigger timer fits
+    const timerPx = Math.min(0.26 * H, (W - x0 - gap - margin) / 2.6); // condensed digits: a big timer fits
+    st.setProperty('--timer', timerPx + 'px');
+    // The current step = name (6.6u) above the countdown, centered on the dot. The name's text block also holds a
+    // hidden time line (4.4u); move it up so the name sits right above the countdown.
+    const unit = H / 100;
+    const nameH = 6.6 * unit * 1.08;
+    const subH = 4.4 * unit * 1.08;
+    const timerLine = timerPx * 0.92;
+    st.setProperty('--cur-dy', (subH / 2 - timerLine / 2) + 'px');
+    st.setProperty('--cur-dy-small', (subH / 2 - (timerLine * 0.42) / 2 - 1.6 * unit) + 'px'); // + a little air above the small time
+    st.setProperty('--timer-x', (x0 + gap) + 'px');
+    st.setProperty('--timer-y', (cy + nameH / 2) + 'px');
     u.svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     u.track.setAttribute('cx', cx);
     u.track.setAttribute('cy', cy);
@@ -569,7 +583,7 @@
   function makeItem(id) {
     const nm = F.h('span', { class: 'nm' });
     const sub = F.h('span', { class: 'sub' });
-    const el = F.h('div', { class: 'item' }, F.h('i', { class: 'dot' }), nm, sub);
+    const el = F.h('div', { class: 'item' }, F.h('i', { class: 'dot' }), F.h('div', { class: 'txt' }, nm, sub));
     el._nm = nm;
     el._sub = sub;
     ui[id].items.append(el);
@@ -583,15 +597,8 @@
     if (o === 0 && ui[id].nopeUntil > now) cls.push('nope');
     let sub = '';
     let name = item.name;
-    if (o === 0 && s.phase === 'break') {
-      name = 'On break';
-      sub = F.fmtDur(now - s.breakStart);
-    } else if (o === 0) {
-      if (s.phase !== 'cycle') sub = F.fmtDur(now - s.readySince - (s.waitBreakMs || 0));
-      else {
-        const rem = stepEnd(s) - now;
-        sub = rem > 0 ? F.fmtDur(rem, { ceil: true }) : F.fmtDur(-rem, { signed: true });
-      }
+    if (o === 0) {
+      if (s.phase === 'break') name = 'On break'; // the countdown itself is drawn by .bigtimer
     } else if (o > 0) {
       if (!item.ready) sub = F.fmtDur(item.duration * 1000) + (item.auto ? ' auto' : '');
       if (o === 1 && (phase === 'due' || phase === 'late')) cls.push('go');
@@ -656,12 +663,19 @@
     const u = ui[id];
     const s = state[id];
     const g = u.geo;
-    if (!g || s.phase !== 'cycle') { if (u.prog.getAttribute('d')) u.prog.setAttribute('d', ''); return; }
+    if (!g || s.phase !== 'cycle') {
+      if (u.progD) { u.prog.setAttribute('d', ''); u.progGlow.setAttribute('d', ''); u.progD = ''; }
+      return;
+    }
     const st = s.steps[s.stepIndex];
     const frac = Math.max(0.001, Math.min(1, (now - s.stepStart) / (st.duration * 1000)));
     const [x0, y0] = arcPoint(id, 0);
     const [x1, y1] = arcPoint(id, g.ang[1] * frac);
-    u.prog.setAttribute('d', `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${g.R} ${g.R} 0 0 ${id === 'L' ? 1 : 0} ${x1.toFixed(1)} ${y1.toFixed(1)}`);
+    const d = `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${g.R} ${g.R} 0 0 ${id === 'L' ? 1 : 0} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+    if (d === u.progD) return; // only redraw when it moved (saves work on older iPads)
+    u.progD = d;
+    u.prog.setAttribute('d', d);
+    u.progGlow.setAttribute('d', d);
   }
 
   function render(id, now) {
@@ -670,6 +684,30 @@
     if (u.root.dataset.phase !== phase) u.root.dataset.phase = phase;
     syncWheel(id, now, phase);
     drawProgress(id, now);
+    renderTimer(id, now);
+  }
+
+  function renderTimer(id, now) {
+    const s = state[id];
+    const u = ui[id];
+    let txt;
+    if (s.phase === 'break') txt = F.fmtDur(now - s.breakStart);
+    else if (s.phase !== 'cycle') txt = F.fmtDur(now - s.readySince - (s.waitBreakMs || 0));
+    else {
+      const rem = stepEnd(s) - now;
+      txt = rem > 0 ? F.fmtDur(rem, { ceil: true }) : F.fmtDur(-rem, { signed: true });
+    }
+    if (u.timer.textContent !== txt) u.timer.textContent = txt;
+    const key = s.phase === 'cycle' ? `${s.cycleId}:${s.stepIndex}` : s.phase;
+    if (u.timerKey !== key) { // a new step: fade the new time in
+      if (u.timerKey !== undefined) {
+        u.timer.classList.remove('swap');
+        void u.timer.offsetWidth;
+        u.timer.classList.add('swap');
+      }
+      u.timerKey = key;
+    }
+    u.timer.classList.toggle('nope', u.nopeUntil > now);
   }
 
   // ---------- on-screen stats + finger buttons ----------
@@ -761,14 +799,9 @@
       alerts(id, now);
       holdCheck(id, now);
       updateBar(id, now);
+      render(id, now);
     }
     renderNotice();
-  }
-
-  function frame() {
-    const now = Date.now();
-    IDS.forEach((id) => render(id, now));
-    requestAnimationFrame(frame);
   }
 
   // New settings apply right away (a running round keeps its own copy of the steps).
@@ -888,7 +921,6 @@
     viewport: `${innerWidth}x${innerHeight}`, state: JSON.parse(JSON.stringify(state)),
   });
   logicTick();
-  setInterval(logicTick, 100);
-  requestAnimationFrame(frame);
+  setInterval(logicTick, 100); // logic + screen updates; the roll itself is animated by CSS on the GPU
   if (openSettingsOnLoad) openSettings();
 })();
