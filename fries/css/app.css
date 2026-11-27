@@ -159,10 +159,12 @@ body.screen { overflow: hidden; background: #000; user-select: none; -webkit-use
 .item.gone { opacity: 0 !important; }
 
 /* top outer corner: today's stats as number-over-label cells */
-.stats { position: absolute; top: calc(var(--u) * 2 + var(--safe-top)); z-index: 3; display: flex; flex-wrap: wrap; gap: calc(var(--u) * .6) calc(var(--u) * 2.2);
-  max-width: calc(100% - var(--u) * 5); font-variant-numeric: tabular-nums; pointer-events: none; }
-.fryer[data-id="L"] .stats { left: calc(var(--u) * 2.6); }
-.fryer[data-id="R"] .stats { right: calc(var(--u) * 2.6); flex-direction: row-reverse; }
+/* stats sit in from the outer corners, toward the center (the corners stay free, e.g. for Safari's full-screen X) */
+.stats { position: absolute; top: calc(var(--u) * 2 + var(--safe-top)); z-index: 3; display: flex; flex-wrap: wrap;
+  gap: calc(var(--u) * .6) calc(var(--u) * 1.4); max-width: calc(100% - var(--u) * 5 - 120px);
+  font-variant-numeric: tabular-nums; pointer-events: none; }
+.fryer[data-id="L"] .stats { left: calc(var(--u) * 2.6 + 60px); }
+.fryer[data-id="R"] .stats { right: calc(var(--u) * 2.6 + 60px); flex-direction: row-reverse; }
 .stats .cell { display: flex; flex-direction: column; line-height: 1.15; }
 .fryer[data-id="R"] .stats .cell { align-items: flex-end; }
 .stats b { font-size: calc(var(--u) * 2.3); font-weight: 700; color: rgba(255, 255, 255, .82); }
