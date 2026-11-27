@@ -835,16 +835,31 @@
 
   const noticeEl = document.getElementById('notice');
   noticeEl.addEventListener('click', unlockExtras);
+  // Full screen button (top center). Hidden when the app already runs full screen from the Home Screen,
+  // or where the browser can't do it (iPhone). Browsers only allow full screen after a tap.
   const fsBtn = document.getElementById('fs');
   const fsTarget = document.documentElement;
-  if (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen) {
+  const FS_ICONS = {
+    enter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    exit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',
+  };
+  const inFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  function updateFsButton() {
+    const on = inFullscreen();
+    fsBtn.innerHTML = on ? FS_ICONS.exit : FS_ICONS.enter;
+    fsBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  }
+  if (!standalone && (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen)) {
+    fsBtn.hidden = false;
+    updateFsButton();
     fsBtn.addEventListener('click', () => {
-      const inFs = document.fullscreenElement || document.webkitFullscreenElement;
-      if (inFs) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-      else (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen).call(fsTarget);
+      const p = inFullscreen()
+        ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+        : (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen).call(fsTarget);
+      if (p && p.catch) p.catch(() => {}); // refused (e.g. no tap allowed): nothing to do
     });
-  } else {
-    fsBtn.hidden = true;
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach((t) => document.addEventListener(t, updateFsButton));
   }
 
   // Sound is always on. Browsers start audio only after the first pedal press or touch; try right away anyway.

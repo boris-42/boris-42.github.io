@@ -199,12 +199,13 @@ body.screen { overflow: hidden; background: #000; user-select: none; -webkit-use
 .holdbar { height: 100%; width: 0; background: #ff5f5f; }
 .hold[data-mode="break"] .holdbar { background: #8aa0b4; }
 
-/* settings gear (top center) + notices (only when something needs attention) */
-.gear { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 10; display: grid; place-items: center;
-  width: 48px; height: 48px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .16);
-  background: rgba(255, 255, 255, .07); color: rgba(255, 255, 255, .7); cursor: pointer; }
-.gear:hover { color: #fff; }
-.gear svg { width: 26px; height: 26px; }
+/* top center: full screen + settings gear (notices appear only when something needs attention) */
+.topctl { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; }
+.roundbtn { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .07); color: rgba(255, 255, 255, .7); cursor: pointer; }
+.roundbtn[hidden] { display: none; }
+.roundbtn:hover { color: #fff; }
+.roundbtn svg { width: 24px; height: 24px; }
 .notice { position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%); z-index: 10; display: flex;
   flex-direction: column; align-items: center; gap: 6px; }
 .notice span { background: rgba(0, 0, 0, .85); border-radius: 999px; padding: 8px 16px; font-size: 15px; cursor: pointer; }
