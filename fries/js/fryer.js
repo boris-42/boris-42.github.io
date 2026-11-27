@@ -507,7 +507,8 @@
     const W = u.root.clientWidth;
     const H = u.root.clientHeight;
     if (!W || !H) return;
-    const top = TOP_BAND * H;
+    const safeTop = document.getElementById('safeProbe').offsetHeight; // iPad status bar in full screen
+    const top = TOP_BAND * H + safeTop;
     const Hu = H - top - BOTTOM_BAND * H; // height available to the wheel
     const R = 1.0 * Hu;
     const ang = SLOT_Y.map((y) => Math.asin(Math.min(0.98, (y * Hu) / R)));
@@ -799,7 +800,10 @@
   function openSettings() {
     if (!modal.hidden) return;
     modal.hidden = false;
-    panel = window.FriesSettings.mount(modalBody, { onSaved: applyConfig, onStatus: setStatus });
+    panel = window.FriesSettings.mount(modalBody, {
+      onSaved: applyConfig, onStatus: setStatus,
+      onStatsCleared: () => IDS.forEach(refreshToday), // counters on screen go back to zero
+    });
     statusEl.textContent = IDLE_STATUS;
     statusEl.classList.remove('err');
   }
@@ -845,14 +849,21 @@
   };
   const inFullscreen = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  let fsShown = null;
   function updateFsButton() {
     const on = inFullscreen();
+    if (on === fsShown) return;
+    fsShown = on;
     fsBtn.innerHTML = on ? FS_ICONS.exit : FS_ICONS.enter;
     fsBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    document.documentElement.classList.toggle('fs-mode', on || standalone);
+    if (ui.L && ui.R) IDS.forEach(layout); // the header moves down/up for the status bar
   }
-  if (!standalone && (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen)) {
+  document.documentElement.classList.toggle('fs-mode', standalone);
+  if (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen) {
     fsBtn.hidden = false;
     updateFsButton();
+    setInterval(updateFsButton, 500); // keep the icon right even if a browser misses the change event
     fsBtn.addEventListener('click', () => {
       const p = inFullscreen()
         ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)

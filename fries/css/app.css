@@ -52,6 +52,10 @@ a { color: #8cc4ff; }
 
 /* ---------- fryer screen ---------- */
 /* Sizes use --u (1% of the panel height) so the layout scales with any iPad/laptop screen. */
+/* space for the iPad status bar (clock, battery) in full screen / Home Screen mode */
+:root { --safe-top: env(safe-area-inset-top, 0px); }
+html.fs-mode { --safe-top: max(env(safe-area-inset-top, 0px), 26px); }
+.safe-probe { position: fixed; top: 0; left: 0; width: 0; height: var(--safe-top); visibility: hidden; pointer-events: none; }
 body.screen { overflow: hidden; background: #000; user-select: none; -webkit-user-select: none;
   -webkit-touch-callout: none; touch-action: manipulation; }
 .fryers { position: fixed; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #0a0f16; }
@@ -155,7 +159,7 @@ body.screen { overflow: hidden; background: #000; user-select: none; -webkit-use
 .item.gone { opacity: 0 !important; }
 
 /* top outer corner: today's stats as number-over-label cells */
-.stats { position: absolute; top: calc(var(--u) * 2); z-index: 3; display: flex; flex-wrap: wrap; gap: calc(var(--u) * .6) calc(var(--u) * 2.2);
+.stats { position: absolute; top: calc(var(--u) * 2 + var(--safe-top)); z-index: 3; display: flex; flex-wrap: wrap; gap: calc(var(--u) * .6) calc(var(--u) * 2.2);
   max-width: calc(100% - var(--u) * 5); font-variant-numeric: tabular-nums; pointer-events: none; }
 .fryer[data-id="L"] .stats { left: calc(var(--u) * 2.6); }
 .fryer[data-id="R"] .stats { right: calc(var(--u) * 2.6); flex-direction: row-reverse; }
@@ -200,7 +204,7 @@ body.screen { overflow: hidden; background: #000; user-select: none; -webkit-use
 .hold[data-mode="break"] .holdbar { background: #8aa0b4; }
 
 /* top center: full screen + settings gear (notices appear only when something needs attention) */
-.topctl { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; }
+.topctl { position: fixed; left: 50%; top: calc(8px + var(--safe-top)); transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; }
 .roundbtn { display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .07); color: rgba(255, 255, 255, .7); cursor: pointer; }
 .roundbtn[hidden] { display: none; }
@@ -346,3 +350,7 @@ details summary { cursor: pointer; margin-top: 10px; }
 .del:disabled { opacity: .3; cursor: default; }
 .s-row.add { width: 100%; border: 0; background: none; font: inherit; font-size: 17px; cursor: pointer; text-align: left; color: var(--blue); }
 .range { width: 180px; accent-color: var(--blue); }
+.s-stats { margin-top: 8px; }
+.s-row.danger { width: 100%; justify-content: center; border: 0; background: none; color: var(--red); font: inherit;
+  font-size: 17px; cursor: pointer; transition: background-color .2s; }
+.s-row.danger.armed { background: rgba(255, 104, 115, .16); font-weight: 600; }

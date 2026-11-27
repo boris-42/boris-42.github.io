@@ -9,7 +9,7 @@
   const showDur = (sec) => F.fmtDur(sec * 1000);
   const STEP_ADJUST = [-15, -5, 5, 15]; // step times change with buttons only (no typing on the iPad); new steps start at 1:00
 
-  function mount(root, { onSaved, onStatus } = {}) {
+  function mount(root, { onSaved, onStatus, onStatsCleared } = {}) {
     let draft = F.loadStoredConfig();
     let active = null; // the step row showing its controls (tapped on the iPad; hover on a computer): "L:0"
     let timer = null;
@@ -200,9 +200,37 @@
           foot('Holding the pedal resets a running round, or starts a break when Ready.')));
     }
 
+    // delete every recorded round/break/event on this device (two taps, like Reset)
+    function statsSection() {
+      let disarmTimer = null;
+      const btn = h('button', {
+        class: 's-row danger', type: 'button',
+        onclick: () => {
+          if (!btn.classList.contains('armed')) {
+            btn.classList.add('armed');
+            btn.textContent = 'Tap again to delete all stats';
+            disarmTimer = setTimeout(() => { btn.classList.remove('armed'); btn.textContent = 'Delete all stats'; }, 4000);
+            return;
+          }
+          clearTimeout(disarmTimer);
+          const days = F.listDays();
+          days.forEach(F.deleteDay);
+          F.log('stats_cleared', null, { days: days.length });
+          btn.classList.remove('armed');
+          btn.textContent = 'Delete all stats';
+          status('All stats deleted');
+          if (onStatsCleared) onStatsCleared();
+        },
+      }, 'Delete all stats');
+      return h('div', { class: 's-stats' },
+        head('Stats'),
+        group(btn),
+        foot('Removes every round, break and event recorded on this device. Export them on the Stats page first if you need them.'));
+    }
+
     function build() {
       root.textContent = '';
-      root.append(h('div', { class: 's-cols' }, fryerColumn('L'), fryerColumn('R')), sharedSection());
+      root.append(h('div', { class: 's-cols' }, fryerColumn('L'), fryerColumn('R')), sharedSection(), statsSection());
     }
 
     build();
